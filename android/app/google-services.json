@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "399996765332",
+    "project_id": "smash-stack-7a6b6",
+    "storage_bucket": "smash-stack-7a6b6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:399996765332:android:70dcab938cd0414e052081",
+        "android_client_info": {
+          "package_name": "com.schroederssoftwaresolutions.smashstack"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "399996765332-copcrqvscva186qf5527vqba5tik20er.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.schroederssoftwaresolutions.smashstack",
+            "certificate_hash": "a1c2b81dbb47138560adb2cbbd33f060bd38ec8d"
+          }
+        },
+        {
+          "client_id": "399996765332-mnirrvncagnp4auhbdplbgeliq2pqki4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.schroederssoftwaresolutions.smashstack",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "399996765332-vd1gls3p5l93q7nol4fd6fggerovqjgd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBEyItxUNEc529R99KZ2z2FLB4CbnyPY0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "399996765332-vd1gls3p5l93q7nol4fd6fggerovqjgd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "399996765332-fbj38p3jog8ua4ej2ccvvjinjv01lo3c.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.schroederssoftwaresolutions.smashstack"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
