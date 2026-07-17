@@ -1,9 +1,5 @@
 import 'dart:async';
-
-import 'package:collection/collection.dart';
-
 import '/backend/schema/util/firestore_util.dart';
-
 import 'index.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 
@@ -25,9 +21,40 @@ class QueRecord extends FirestoreRecord {
   String get playerB => _playerB ?? '';
   bool hasPlayerB() => _playerB != null;
 
+  // Game state fields
+  CardStruct? _playerACard;
+  CardStruct get playerACard => _playerACard ?? CardStruct();
+  bool hasPlayerACard() => _playerACard != null;
+
+  CardStruct? _playerBCard;
+  CardStruct get playerBCard => _playerBCard ?? CardStruct();
+  bool hasPlayerBCard() => _playerBCard != null;
+
+  int? _playerALife;
+  int get playerALife => _playerALife ?? 20;
+  bool hasPlayerALife() => _playerALife != null;
+
+  int? _playerBLife;
+  int get playerBLife => _playerBLife ?? 20;
+  bool hasPlayerBLife() => _playerBLife != null;
+
+  int? _playerAEnergy;
+  int get playerAEnergy => _playerAEnergy ?? 20;
+  bool hasPlayerAEnergy() => _playerAEnergy != null;
+
+  int? _playerBEnergy;
+  int get playerBEnergy => _playerBEnergy ?? 20;
+  bool hasPlayerBEnergy() => _playerBEnergy != null;
+
   void _initializeFields() {
     _playerA = snapshotData['PlayerA'] as String?;
     _playerB = snapshotData['PlayerB'] as String?;
+    _playerACard = CardStruct.maybeFromMap(snapshotData['PlayerACard']);
+    _playerBCard = CardStruct.maybeFromMap(snapshotData['PlayerBCard']);
+    _playerALife = castToType<int>(snapshotData['PlayerALife']);
+    _playerBLife = castToType<int>(snapshotData['PlayerBLife']);
+    _playerAEnergy = castToType<int>(snapshotData['PlayerAEnergy']);
+    _playerBEnergy = castToType<int>(snapshotData['PlayerBEnergy']);
   }
 
   static CollectionReference get collection =>
@@ -66,28 +93,25 @@ class QueRecord extends FirestoreRecord {
 Map<String, dynamic> createQueRecordData({
   String? playerA,
   String? playerB,
+  CardStruct? playerACard,
+  CardStruct? playerBCard,
+  int? playerALife,
+  int? playerBLife,
+  int? playerAEnergy,
+  int? playerBEnergy,
 }) {
   final firestoreData = mapToFirestore(
     <String, dynamic>{
       'PlayerA': playerA,
       'PlayerB': playerB,
+      'PlayerACard': playerACard?.toMap(),
+      'PlayerBCard': playerBCard?.toMap(),
+      'PlayerALife': playerALife,
+      'PlayerBLife': playerBLife,
+      'PlayerAEnergy': playerAEnergy,
+      'PlayerBEnergy': playerBEnergy,
     }.withoutNulls,
   );
 
   return firestoreData;
-}
-
-class QueRecordDocumentEquality implements Equality<QueRecord> {
-  const QueRecordDocumentEquality();
-
-  @override
-  bool equals(QueRecord? e1, QueRecord? e2) {
-    return e1?.playerA == e2?.playerA && e1?.playerB == e2?.playerB;
-  }
-
-  @override
-  int hash(QueRecord? e) => const ListEquality().hash([e?.playerA, e?.playerB]);
-
-  @override
-  bool isValidKey(Object? o) => o is QueRecord;
 }

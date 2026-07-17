@@ -1,9 +1,6 @@
 import 'dart:async';
-
 import 'package:collection/collection.dart';
-
 import '/backend/schema/util/firestore_util.dart';
-
 import 'index.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 
@@ -15,30 +12,47 @@ class PlayerStatsRecord extends FirestoreRecord {
     _initializeFields();
   }
 
-  // "Wins" field.
+  // Existing fields
   int? _wins;
   int get wins => _wins ?? 0;
   bool hasWins() => _wins != null;
 
-  // "Losses" field.
   int? _losses;
   int get losses => _losses ?? 0;
   bool hasLosses() => _losses != null;
 
-  // "WinPercentage" field.
   int? _winPercentage;
   int get winPercentage => _winPercentage ?? 0;
   bool hasWinPercentage() => _winPercentage != null;
 
-  // "WinningStreak" field.
   int? _winningStreak;
   int get winningStreak => _winningStreak ?? 0;
   bool hasWinningStreak() => _winningStreak != null;
 
-  // "UserReference" field.
   DocumentReference? _userReference;
   DocumentReference? get userReference => _userReference;
   bool hasUserReference() => _userReference != null;
+
+  // New aggregate stats fields
+  int? _totalDamageDealt;
+  int get totalDamageDealt => _totalDamageDealt ?? 0;
+  bool hasTotalDamageDealt() => _totalDamageDealt != null;
+
+  int? _totalDamageTaken;
+  int get totalDamageTaken => _totalDamageTaken ?? 0;
+  bool hasTotalDamageTaken() => _totalDamageTaken != null;
+
+  int? _totalEnergySpent;
+  int get totalEnergySpent => _totalEnergySpent ?? 0;
+  bool hasTotalEnergySpent() => _totalEnergySpent != null;
+
+  int? _totalCardsPlayed;
+  int get totalCardsPlayed => _totalCardsPlayed ?? 0;
+  bool hasTotalCardsPlayed() => _totalCardsPlayed != null;
+
+  int? _totalEvades;
+  int get totalEvades => _totalEvades ?? 0;
+  bool hasTotalEvades() => _totalEvades != null;
 
   void _initializeFields() {
     _wins = castToType<int>(snapshotData['Wins']);
@@ -46,6 +60,12 @@ class PlayerStatsRecord extends FirestoreRecord {
     _winPercentage = castToType<int>(snapshotData['WinPercentage']);
     _winningStreak = castToType<int>(snapshotData['WinningStreak']);
     _userReference = snapshotData['UserReference'] as DocumentReference?;
+    
+    _totalDamageDealt = castToType<int>(snapshotData['TotalDamageDealt']);
+    _totalDamageTaken = castToType<int>(snapshotData['TotalDamageTaken']);
+    _totalEnergySpent = castToType<int>(snapshotData['TotalEnergySpent']);
+    _totalCardsPlayed = castToType<int>(snapshotData['TotalCardsPlayed']);
+    _totalEvades = castToType<int>(snapshotData['TotalEvades']);
   }
 
   static CollectionReference get collection =>
@@ -88,6 +108,11 @@ Map<String, dynamic> createPlayerStatsRecordData({
   int? winPercentage,
   int? winningStreak,
   DocumentReference? userReference,
+  int? totalDamageDealt,
+  int? totalDamageTaken,
+  int? totalEnergySpent,
+  int? totalCardsPlayed,
+  int? totalEvades,
 }) {
   final firestoreData = mapToFirestore(
     <String, dynamic>{
@@ -96,6 +121,11 @@ Map<String, dynamic> createPlayerStatsRecordData({
       'WinPercentage': winPercentage,
       'WinningStreak': winningStreak,
       'UserReference': userReference,
+      'TotalDamageDealt': totalDamageDealt,
+      'TotalDamageTaken': totalDamageTaken,
+      'TotalEnergySpent': totalEnergySpent,
+      'TotalCardsPlayed': totalCardsPlayed,
+      'TotalEvades': totalEvades,
     }.withoutNulls,
   );
 
@@ -111,7 +141,12 @@ class PlayerStatsRecordDocumentEquality implements Equality<PlayerStatsRecord> {
         e1?.losses == e2?.losses &&
         e1?.winPercentage == e2?.winPercentage &&
         e1?.winningStreak == e2?.winningStreak &&
-        e1?.userReference == e2?.userReference;
+        e1?.userReference == e2?.userReference &&
+        e1?.totalDamageDealt == e2?.totalDamageDealt &&
+        e1?.totalDamageTaken == e2?.totalDamageTaken &&
+        e1?.totalEnergySpent == e2?.totalEnergySpent &&
+        e1?.totalCardsPlayed == e2?.totalCardsPlayed &&
+        e1?.totalEvades == e2?.totalEvades;
   }
 
   @override
@@ -120,7 +155,12 @@ class PlayerStatsRecordDocumentEquality implements Equality<PlayerStatsRecord> {
         e?.losses,
         e?.winPercentage,
         e?.winningStreak,
-        e?.userReference
+        e?.userReference,
+        e?.totalDamageDealt,
+        e?.totalDamageTaken,
+        e?.totalEnergySpent,
+        e?.totalCardsPlayed,
+        e?.totalEvades,
       ]);
 
   @override

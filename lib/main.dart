@@ -11,6 +11,9 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'services/ad_service.dart';
+import 'services/revenue_cat_service.dart';
+import 'services/audio_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +29,10 @@ void main() async {
 
   if (!kIsWeb) {
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    await AdService().init();
+    await RevenueCatService().init();
   }
+  await AudioService().init();
 
   runApp(ChangeNotifierProvider(
     create: (context) => appState,
@@ -77,7 +83,7 @@ class _MyAppState extends State<MyApp> {
       });
     jwtTokenStream.listen((_) {});
     Future.delayed(
-      Duration(milliseconds: 1000),
+      Duration(milliseconds: 4000),
       () => _appStateNotifier.stopShowingSplashImage(),
     );
   }

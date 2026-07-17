@@ -64,22 +64,21 @@ class _QuePageWidgetState extends State<QuePageWidget>
           ));
         }
 
-        context.pushNamed(BattleZonePlayHumWidget.routeName);
+        context.pushNamed(
+          BattleZonePlayHumWidget.routeName,
+          extra: {
+            'matchRef': _model.grabFirstQueDoc?.reference,
+          },
+        );
       } else {
         var queRecordReference1 = QueRecord.collection.doc();
         await queRecordReference1.set(createQueRecordData(
-          playerA: valueOrDefault<String>(
-            currentUserReference?.id,
-            '\"\"',
-          ),
+          playerA: currentUserUid,
           playerB: '',
         ));
         _model.generateNewQueDoc = QueRecord.getDocumentFromData(
             createQueRecordData(
-              playerA: valueOrDefault<String>(
-                currentUserReference?.id,
-                '\"\"',
-              ),
+              playerA: currentUserUid,
               playerB: '',
             ),
             queRecordReference1);
@@ -98,7 +97,12 @@ class _QuePageWidgetState extends State<QuePageWidget>
                     _model.readingNewQueDoc?.playerB != '')) {
               _model.newInstantTimer?.cancel();
 
-              context.pushNamed(BattleZonePlayHumWidget.routeName);
+              context.pushNamed(
+                BattleZonePlayHumWidget.routeName,
+                extra: {
+                  'matchRef': _model.generateNewQueDoc?.reference,
+                },
+              );
             }
           },
           startImmediately: true,

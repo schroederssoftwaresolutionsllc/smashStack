@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "399996765332-6ho57v2rrf781mqob42u43750b30j2jj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.schroederssoftwaresolutions.smashstack",
+            "certificate_hash": "2cc18bca17e0b1a1fedcefbba46ccb134fe4af22"
+          }
+        },
+        {
           "client_id": "399996765332-copcrqvscva186qf5527vqba5tik20er.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.schroederssoftwaresolutions.smashstack",
             "certificate_hash": "a1c2b81dbb47138560adb2cbbd33f060bd38ec8d"
+          }
+        },
+        {
+          "client_id": "399996765332-m2dpmi22p8lmrap5ck8cb2rb3p2r96ul.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.schroederssoftwaresolutions.smashstack",
+            "certificate_hash": "ea9319d390a201f83cd2f3765d42b3368ecfa864"
           }
         },
         {

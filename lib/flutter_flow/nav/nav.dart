@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '/backend/backend.dart';
-import '/backend/schema/structs/index.dart';
 
 import '/auth/base_auth_user_provider.dart';
 
 import '/flutter_flow/flutter_flow_util.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '/index.dart';
 
@@ -113,7 +113,17 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: BattleZonePlayHumWidget.routeName,
           path: BattleZonePlayHumWidget.routePath,
-          builder: (context, params) => BattleZonePlayHumWidget(),
+          builder: (context, params) => BattleZonePlayHumWidget(
+            matchRef: params.getParam<DocumentReference>(
+              'matchRef',
+              ParamType.DocumentReference,
+            ),
+          ),
+        ),
+        FFRoute(
+          name: ProfilePageWidget.routeName,
+          path: ProfilePageWidget.routePath,
+          builder: (context, params) => ProfilePageWidget(),
         )
       ].map((r) => r.toRoute(appStateNotifier)).toList(),
     );
@@ -192,9 +202,7 @@ extension _GoRouterStateExtensions on GoRouterState {
     ..addAll(pathParameters)
     ..addAll(uri.queryParameters)
     ..addAll(extraMap);
-  TransitionInfo get transitionInfo => extraMap.containsKey(kTransitionInfoKey)
-      ? extraMap[kTransitionInfoKey] as TransitionInfo
-      : TransitionInfo.appDefault();
+  TransitionInfo get transitionInfo => TransitionInfo.appDefault();
 }
 
 class FFParameters {
@@ -301,13 +309,20 @@ class FFRoute {
               : builder(context, ffParams);
           final child = appStateNotifier.loading
               ? Container(
-                  color: Colors.transparent,
-                  child: Image.asset(
-                    'assets/images/SMash_Stack_PNG_FROM_SVG.png',
-                    fit: BoxFit.contain,
+                  color: Colors.black, // Match FFAppState().primaryBackground if possible
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/app_launcher_icon.png',
+                      width: MediaQuery.of(context).size.width * 0.4,
+                      height: MediaQuery.of(context).size.width * 0.4,
+                      fit: BoxFit.contain,
+                    ).animate()
+                     .fadeIn(duration: 2000.ms, curve: Curves.easeInOut)
+                     .then(delay: 0.ms)
+                     .fadeOut(duration: 2000.ms, curve: Curves.easeInOut),
                   ),
                 )
-              : page;
+              : page; // Remove extra animation here as it might conflict with pageTransition
 
           final transitionInfo = state.transitionInfo;
           return transitionInfo.hasTransition
@@ -342,7 +357,7 @@ class TransitionInfo {
   const TransitionInfo({
     required this.hasTransition,
     this.transitionType = PageTransitionType.fade,
-    this.duration = const Duration(milliseconds: 300),
+    this.duration = const Duration(milliseconds: 1000),
     this.alignment,
   });
 
@@ -351,7 +366,11 @@ class TransitionInfo {
   final Duration duration;
   final Alignment? alignment;
 
-  static TransitionInfo appDefault() => TransitionInfo(hasTransition: false);
+  static TransitionInfo appDefault() => TransitionInfo(
+        hasTransition: true,
+        transitionType: PageTransitionType.fade,
+        duration: Duration(milliseconds: 1000),
+      );
 }
 
 class RootPageContext {

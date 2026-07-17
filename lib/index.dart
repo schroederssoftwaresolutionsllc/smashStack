@@ -7,3 +7,4 @@ export '/pages/loading_page/loading_page_widget.dart' show LoadingPageWidget;
 export '/pages/que_page/que_page_widget.dart' show QuePageWidget;
 export '/pages/battle_zone_play_hum/battle_zone_play_hum_widget.dart'
     show BattleZonePlayHumWidget;
+export '/pages/profile_page/profile_page_widget.dart' show ProfilePageWidget;

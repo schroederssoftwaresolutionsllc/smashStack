@@ -48,10 +48,6 @@ class FirebaseAuthManager extends AuthManager
         JwtSignInManager,
         GithubSignInManager,
         PhoneSignInManager {
-  // Set when using phone verification (after phone number is provided).
-  String? _phoneAuthVerificationCode;
-  // Set when using phone sign in in web mode (ignored otherwise).
-  ConfirmationResult? _webPhoneAuthConfirmationResult;
   FirebasePhoneAuthManager phoneAuthManager = FirebasePhoneAuthManager();
 
   @override
@@ -71,7 +67,7 @@ class FirebaseAuthManager extends AuthManager
       if (e.code == 'requires-recent-login') {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
               content: Text(
                   'Too long since most recent sign in. Sign in again before deleting your account.')),
         );
@@ -79,7 +75,6 @@ class FirebaseAuthManager extends AuthManager
     }
   }
 
-  @override
   Future updateEmail({
     required String email,
     required BuildContext context,
@@ -95,7 +90,7 @@ class FirebaseAuthManager extends AuthManager
       if (e.code == 'requires-recent-login') {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
               content: Text(
                   'Too long since most recent sign in. Sign in again before updating your email.')),
         );
@@ -103,7 +98,6 @@ class FirebaseAuthManager extends AuthManager
     }
   }
 
-  @override
   Future updatePassword({
     required String newPassword,
     required BuildContext context,

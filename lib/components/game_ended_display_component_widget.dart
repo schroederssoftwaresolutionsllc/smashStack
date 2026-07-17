@@ -1,6 +1,9 @@
 import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/flutter_flow_widgets.dart';
+import '/services/game_logic.dart';
+import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -69,84 +72,101 @@ class _GameEndedDisplayComponentWidgetState
     super.dispose();
   }
 
+  Widget _buildStatRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
 
     return Column(
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Builder(
-          builder: (context) {
-            if (FFAppState().GameEndedWin) {
-              return Container(
-                width: MediaQuery.sizeOf(context).width * 0.25,
-                height: MediaQuery.sizeOf(context).height * 0.3,
-                decoration: BoxDecoration(
-                  color: FlutterFlowTheme.of(context).secondary,
-                ),
-                child: Align(
-                  alignment: AlignmentDirectional(0.0, 0.0),
-                  child: Text(
-                    'VICTORY!',
-                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.robotoCondensed(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          fontSize: 30.0,
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
+        Card(
+          elevation: 10,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            width: MediaQuery.sizeOf(context).width * 0.8,
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: FFAppState().GameEndedWin 
+                  ? [FlutterFlowTheme.of(context).secondary, FlutterFlowTheme.of(context).primary]
+                  : [FlutterFlowTheme.of(context).error, Colors.black],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    FFAppState().GameEndedWin ? 'VICTORY!' : 'DEFEAT!',
+                    style: GoogleFonts.raleway(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ).animateOnPageLoad(
-                  animationsMap['containerOnPageLoadAnimation1']!);
-            } else {
-              return Container(
-                width: MediaQuery.sizeOf(context).width * 0.25,
-                height: MediaQuery.sizeOf(context).height * 0.3,
-                decoration: BoxDecoration(
-                  color: FlutterFlowTheme.of(context).error,
-                ),
-                child: Align(
-                  alignment: AlignmentDirectional(0.0, 0.0),
-                  child: Text(
-                    'DEFEAT!',
-                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.robotoCondensed(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          fontSize: 30.0,
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
+                  SizedBox(height: 16),
+                  Text(
+                    FFAppState().GameEndedWin ? 'You have smashed the stack!' : 'The stack was too much this time.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
                   ),
-                ),
-              ).animateOnPageLoad(
-                  animationsMap['containerOnPageLoadAnimation2']!);
-            }
-          },
-        ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildStatRow('Cards Played', FFAppState().SessionCardsPlayed.toString()),
+                        _buildStatRow('Damage Dealt', FFAppState().SessionDamageDealt.toString()),
+                        _buildStatRow('Damage Taken', FFAppState().SessionDamageTaken.toString()),
+                        _buildStatRow('Energy Spent', FFAppState().SessionEnergySpent.toString()),
+                        _buildStatRow('Successful Evades', FFAppState().SessionEvades.toString()),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  FFButtonWidget(
+                    onPressed: () async {
+                      GameLogic.showPostGameAd();
+                      context.goNamed(LandingPageWidget.routeName);
+                    },
+                    text: 'RETURN TO MENU',
+                    options: FFButtonOptions(
+                      width: double.infinity,
+                      height: 50,
+                      color: Colors.white,
+                      textStyle: GoogleFonts.raleway(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ).animateOnPageLoad(animationsMap['containerOnPageLoadAnimation1']!),
       ],
     );
   }

@@ -173,12 +173,16 @@ class FFAppState extends ChangeNotifier {
 
   List<String> _ComputerNames = [
     'Theo',
-    'John',
     'Matty',
     'Roxanne',
     'Indio',
     'Hanjano',
-    'Kiki'
+    'Kiki',
+    'Atlas',
+    'Nova',
+    'Saffron',
+    'Orion',
+    'Luna'
   ];
   List<String> get ComputerNames => _ComputerNames;
   set ComputerNames(List<String> value) {
@@ -243,4 +247,25 @@ class FFAppState extends ChangeNotifier {
   set YouAvoided(bool value) {
     _YouAvoided = value;
   }
+
+  // Session stats tracking
+  int _SessionDamageDealt = 0;
+  int get SessionDamageDealt => _SessionDamageDealt;
+  set SessionDamageDealt(int value) => _SessionDamageDealt = value;
+
+  int _SessionDamageTaken = 0;
+  int get SessionDamageTaken => _SessionDamageTaken;
+  set SessionDamageTaken(int value) => _SessionDamageTaken = value;
+
+  int _SessionEnergySpent = 0;
+  int get SessionEnergySpent => _SessionEnergySpent;
+  set SessionEnergySpent(int value) => _SessionEnergySpent = value;
+
+  int _SessionCardsPlayed = 0;
+  int get SessionCardsPlayed => _SessionCardsPlayed;
+  set SessionCardsPlayed(int value) => _SessionCardsPlayed = value;
+
+  int _SessionEvades = 0;
+  int get SessionEvades => _SessionEvades;
+  set SessionEvades(int value) => _SessionEvades = value;
 }

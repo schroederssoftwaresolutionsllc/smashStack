@@ -7,7 +7,7 @@
     <application
         android:label="Smash Stack"
         tools:replace="android:label"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/launcher_icon"
         android:requestLegacyExternalStorage="true">
 
         <activity
@@ -58,6 +58,10 @@
 
 
 
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
 
     </application>
 </manifest>

@@ -42,144 +42,166 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
     super.dispose();
   }
 
+  Widget _buildTypeIcon(String name) {
+    final lowerName = name.toLowerCase();
+    IconData iconData;
+    Color iconColor;
+
+    if (lowerName.contains('rest')) {
+      iconData = Icons.bedtime;
+      iconColor = Colors.cyan;
+    } else if (lowerName.contains('block') || lowerName.contains('defend') || lowerName.contains('shield')) {
+      iconData = Icons.shield;
+      iconColor = Colors.blueGrey;
+    } else if (lowerName.contains('evade') || lowerName.contains('dodge') || lowerName.contains('duck') || lowerName.contains('slip')) {
+      iconData = Icons.run_circle;
+      iconColor = Colors.green;
+    } else if (lowerName.contains('jab') || lowerName.contains('quick')) {
+      iconData = FontAwesomeIcons.handFist;
+      iconColor = Colors.orange;
+    } else if (lowerName.contains('hook') || lowerName.contains('smash') || lowerName.contains('attack') || lowerName.contains('pull') || lowerName.contains('hit') || lowerName.contains('cross')) {
+      iconData = FontAwesomeIcons.handFist;
+      iconColor = Colors.redAccent;
+    } else {
+      iconData = Icons.style;
+      iconColor = FlutterFlowTheme.of(context).primary;
+    }
+
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: iconColor.withValues(alpha: 0.1),
+      child: Center(
+        child: FaIcon(
+          iconData,
+          color: iconColor,
+          size: 24.0,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 60.0,
-      height: 80.0,
+      width: 75.0,
+      height: 105.0,
       decoration: BoxDecoration(
         color: FlutterFlowTheme.of(context).secondaryBackground,
         boxShadow: [
           BoxShadow(
-            blurRadius: 6.0,
-            color: Color(0x33000000),
-            offset: Offset(
-              0.0,
-              3.0,
-            ),
+            blurRadius: 10.0,
+            color: Colors.black.withValues(alpha: 0.3),
+            offset: const Offset(0.0, 4.0),
           )
         ],
-        borderRadius: BorderRadius.circular(10.0),
+        borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
           color: FlutterFlowTheme.of(context).primary,
           width: 2.0,
         ),
       ),
-      child: Padding(
-        padding: EdgeInsets.all(6.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 5.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    valueOrDefault<String>(
-                      widget.componentCard?.energy.toString(),
-                      '0',
-                    ),
-                    style: FlutterFlowTheme.of(context).bodySmall.override(
-                          font: GoogleFonts.robotoCondensed(
-                            fontWeight: FontWeight.bold,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodySmall
-                                .fontStyle,
-                          ),
-                          color: FlutterFlowTheme.of(context).error,
-                          fontSize: 11.0,
-                          letterSpacing: 0.0,
-                          fontWeight: FontWeight.bold,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                        ),
-                  ),
-                  Icon(
-                    Icons.bolt,
-                    color: FlutterFlowTheme.of(context).tertiary,
-                    size: 14.0,
-                  ),
-                  Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(2.0, 0.0, 2.0, 0.0),
-                    child: FaIcon(
-                      FontAwesomeIcons.fistRaised,
-                      color: FlutterFlowTheme.of(context).primaryText,
-                      size: 10.0,
-                    ),
-                  ),
-                  Text(
-                    valueOrDefault<String>(
-                      widget.componentCard?.damage.toString(),
-                      '0',
-                    ),
-                    style: FlutterFlowTheme.of(context).bodyMedium.override(
-                          font: GoogleFonts.robotoCondensed(
-                            fontWeight: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontWeight,
-                            fontStyle: FlutterFlowTheme.of(context)
-                                .bodyMedium
-                                .fontStyle,
-                          ),
-                          letterSpacing: 0.0,
-                          fontWeight: FlutterFlowTheme.of(context)
-                              .bodyMedium
-                              .fontWeight,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodyMedium.fontStyle,
-                        ),
-                  ),
-                ],
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          // Header: Energy & Damage
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            decoration: BoxDecoration(
+              color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(10),
+                topRight: Radius.circular(10),
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(2.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6.0),
-                  child: Image.network(
-                    valueOrDefault<String>(
-                      widget.componentCard?.image,
-                      'N/A',
-                    ),
-                    width: 10.0,
-                    height: 10.0,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  valueOrDefault<String>(
-                    widget.componentCard?.name,
-                    'N/A',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: FlutterFlowTheme.of(context).bodySmall.override(
-                        font: GoogleFonts.robotoCondensed(
-                          fontWeight: FontWeight.w600,
-                          fontStyle:
-                              FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                        ),
-                        color: FlutterFlowTheme.of(context).primaryText,
-                        fontSize: 9.0,
-                        letterSpacing: 0.0,
-                        fontWeight: FontWeight.w600,
-                        fontStyle:
-                            FlutterFlowTheme.of(context).bodySmall.fontStyle,
-                      ),
+                Row(
+                  children: [
+                    Icon(Icons.bolt, color: Colors.amber, size: 14),
+                    Text(
+                      '${widget.componentCard?.energy ?? 0}',
+                      style: FlutterFlowTheme.of(context).bodySmall.override(
+                            font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
+                            fontSize: 12,
+                          ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    FaIcon(FontAwesomeIcons.handFist, color: Colors.redAccent, size: 12),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${widget.componentCard?.damage ?? 0}',
+                      style: FlutterFlowTheme.of(context).bodySmall.override(
+                            font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
+                            fontSize: 12,
+                          ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          // Main Body: Image or Icon
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Builder(
+                  builder: (context) {
+                    final cardName = widget.componentCard?.name ?? 'N/A';
+                    final imageUrl = widget.componentCard?.image ?? 'N/A';
+                    
+                    if (imageUrl != 'N/A' && imageUrl.isNotEmpty) {
+                      String finalUrl = imageUrl;
+                      if (imageUrl.startsWith('gs://')) {
+                        try {
+                          final uri = Uri.parse(imageUrl);
+                          final path = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
+                          finalUrl = 'https://firebasestorage.googleapis.com/v0/b/smash-stack-7a6b6.firebasestorage.app/o/${Uri.encodeComponent(path)}?alt=media';
+                        } catch (_) {}
+                      }
+                      return Image.network(
+                        finalUrl,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _buildTypeIcon(cardName),
+                      );
+                    }
+                    return _buildTypeIcon(cardName);
+                  },
+                ),
+              ),
+            ),
+          ),
+          // Footer: Name
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.05),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(10),
+                bottomRight: Radius.circular(10),
+              ),
+            ),
+            child: Text(
+              widget.componentCard?.name ?? 'N/A',
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: FlutterFlowTheme.of(context).bodySmall.override(
+                    font: GoogleFonts.raleway(fontWeight: FontWeight.w800),
+                    fontSize: 10.0,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }
