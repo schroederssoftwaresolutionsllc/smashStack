@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_timer.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/random_data_util.dart' as random_data;
+import '/services/game_logic.dart';
 import '/index.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 import 'package:collection/collection.dart';
@@ -44,63 +45,7 @@ class _LoadingPageWidgetState extends State<LoadingPageWidget>
 
     // On page load action.
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      // Reset state for new game
-      FFAppState().Library = [];
-      FFAppState().Hand = [];
-      FFAppState().YourCardPlayed = false;
-      FFAppState().TheirCardPlayed = false;
-      FFAppState().GameEnded = false;
-      FFAppState().GameEndedWin = false;
-      
-      // Reset Session Stats
-      FFAppState().SessionDamageDealt = 0;
-      FFAppState().SessionDamageTaken = 0;
-      FFAppState().SessionEnergySpent = 0;
-      FFAppState().SessionCardsPlayed = 0;
-      FFAppState().SessionEvades = 0;
-
-      // Get Cards from Firestore
-      final cardsCollection = await queryCardsRecordOnce();
-      _model.getCardsCollection = cardsCollection;
-      
-      if (cardsCollection.isNotEmpty) {
-        for (final cardRecord in cardsCollection) {
-          FFAppState().addToLibrary(CardStruct(
-            energy: cardRecord.card.energy,
-            damage: cardRecord.card.damage,
-            prevents: cardRecord.card.prevents,
-            avoids: cardRecord.card.avoids.take(5).toList(),
-            image: cardRecord.card.image,
-            name: cardRecord.card.name,
-          ));
-        }
-      }
-
-      if (FFAppState().Library.isNotEmpty) {
-        for (int i = 0; i < 5; i++) {
-          final randomIndex = random_data.randomInteger(0, FFAppState().Library.length - 1);
-          final randomCard = FFAppState().Library.elementAtOrNull(randomIndex);
-          if (randomCard != null) {
-            FFAppState().addToHand(randomCard);
-          }
-        }
-      }
-
-      // Set Game Initial State
-      FFAppState().YourLife = 20;
-      FFAppState().ThierLife = 20;
-      FFAppState().TheirEnergy = 20;
-      FFAppState().YourEnergy = 20;
-      
-      if (FFAppState().ComputerNames.isNotEmpty) {
-        final nameIndex = random_data.randomInteger(0, FFAppState().ComputerNames.length - 1);
-        FFAppState().TheirName = FFAppState().ComputerNames.elementAt(nameIndex);
-      } else {
-        FFAppState().TheirName = "Computer";
-      }
-
-      FFAppState().GameEnded = false;
-      FFAppState().GameEndedWin = false;
+      await GameLogic.initializeGame(FFAppState());
       safeSetState(() {});
       _model.loadingTimerController.onStartTimer();
     });
@@ -228,12 +173,17 @@ class _LoadingPageWidgetState extends State<LoadingPageWidget>
                         Padding(
                           padding:
                               EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 32.0),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
+                          child: Container(
+                            width: 100.0,
+                            height: 100.0,
+                            clipBehavior: Clip.antiAlias,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16.0),
+                            ),
+                            padding: EdgeInsets.all(25.0),
                             child: Image.asset(
-                              'assets/images/app_launcher_icon.png',
-                              width: MediaQuery.sizeOf(context).width * 0.4,
-                              height: MediaQuery.sizeOf(context).width * 0.4,
+                              'assets/images/adaptive_foreground_icon.png',
                               fit: BoxFit.contain,
                             ),
                           ),

@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_animations.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/instant_timer.dart';
+import '/services/game_logic.dart';
 import 'dart:async';
 import '/index.dart';
 import 'package:collection/collection.dart';
@@ -85,6 +86,25 @@ class _QuePageWidgetState extends State<QuePageWidget>
         _model.newInstantTimer = InstantTimer.periodic(
           duration: Duration(milliseconds: 5000),
           callback: (timer) async {
+            // Check for timeout (approx 10 seconds = 2 ticks of 5 seconds)
+            // Or better, track start time.
+            _model.pairWaitStartTime ??= DateTime.now();
+            final elapsed = DateTime.now().difference(_model.pairWaitStartTime!).inSeconds;
+
+            if (elapsed >= 10) {
+              _model.newInstantTimer?.cancel();
+              // Seamless transition to computer match
+              await GameLogic.initializeGame(FFAppState());
+              if (mounted) {
+                context.pushNamed(BattleZonePlayCompWidget.routeName);
+                // Optionally delete the que record
+                if (_model.generateNewQueDoc != null) {
+                  await _model.generateNewQueDoc!.reference.delete();
+                }
+              }
+              return;
+            }
+
             unawaited(
               () async {
                 _model.readingNewQueDoc = await QueRecord.getDocumentOnce(
@@ -188,13 +208,18 @@ class _QuePageWidgetState extends State<QuePageWidget>
                       Padding(
                         padding:
                             EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 32.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
+                        child: Container(
+                          width: 140.0,
+                          height: 140.0,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          padding: EdgeInsets.all(20.0),
                           child: Image.asset(
-                            'assets/images/SMash_Stack_PNG_FROM_SVG.png',
-                            width: MediaQuery.sizeOf(context).width * 0.6,
-                            height: MediaQuery.sizeOf(context).height * 0.5,
-                            fit: BoxFit.cover,
+                            'assets/images/adaptive_foreground_icon.png',
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),

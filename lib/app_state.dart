@@ -248,6 +248,18 @@ class FFAppState extends ChangeNotifier {
     _YouAvoided = value;
   }
 
+  bool _CounteredWindowActiveForYou = false;
+  bool get CounteredWindowActiveForYou => _CounteredWindowActiveForYou;
+  set CounteredWindowActiveForYou(bool value) {
+    _CounteredWindowActiveForYou = value;
+  }
+
+  bool _CounteredWindowActiveForThem = false;
+  bool get CounteredWindowActiveForThem => _CounteredWindowActiveForThem;
+  set CounteredWindowActiveForThem(bool value) {
+    _CounteredWindowActiveForThem = value;
+  }
+
   // Session stats tracking
   int _SessionDamageDealt = 0;
   int get SessionDamageDealt => _SessionDamageDealt;

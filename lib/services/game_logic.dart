@@ -5,6 +5,7 @@ import 'audio_service.dart';
 import 'ad_service.dart';
 import 'revenue_cat_service.dart';
 import 'package:flutter/material.dart';
+import '/flutter_flow/random_data_util.dart' as random_data;
 
 class GameLogic {
   static Future<void> processTurn(BuildContext context, {bool isRevealing = false}) async {
@@ -41,6 +42,10 @@ class GameLogic {
   }
 
   static void _resolveBattle(FFAppState state) {
+    // Capture if window was already active before this resolution
+    final wasWindowForYou = state.CounteredWindowActiveForYou;
+    final wasWindowForThem = state.CounteredWindowActiveForThem;
+
     final pCard = state.CardState;
     final eCard = state.EnemyCardState;
 
@@ -75,33 +80,52 @@ class GameLogic {
       }
     }
 
-    // Logic: Duck vs Hook/Jab (Open Window)
-    if (pName.contains('duck') && (eName.contains('hook') || eName.contains('jab'))) {
+    // Logic: Pull vs Uppercut/Hook
+    if (pName.contains('pull') && (eName.contains('uppercut') || eName.contains('hook'))) {
       pEvaded = true;
-      state.YourEnergy = 20; // Full energy for counter
+      state.YourEnergy = 20; 
       AudioService().playSFX('audios/special_move.mp3');
-      // Set special state for "Countered" card visual
-      state.EnemyCardState = CardStruct(name: 'Countered', energy: 0, damage: 0);
+      state.EnemyCardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+      state.CounteredWindowActiveForYou = true;
     }
-    if (eName.contains('duck') && (pName.contains('hook') || pName.contains('jab'))) {
+    if (eName.contains('pull') && (pName.contains('uppercut') || pName.contains('hook'))) {
       eEvaded = true;
       state.TheirEnergy = 20;
       AudioService().playSFX('audios/special_move.mp3');
-      state.CardState = CardStruct(name: 'Countered', energy: 0, damage: 0);
+      state.CardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+      state.CounteredWindowActiveForThem = true;
+    }
+
+    // Logic: Duck vs Hook/Cross
+    if (pName.contains('duck') && (eName.contains('hook') || eName.contains('cross'))) {
+      pEvaded = true;
+      state.YourEnergy = 20; // Full energy for counter
+      AudioService().playSFX('audios/special_move.mp3');
+      state.EnemyCardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+      state.CounteredWindowActiveForYou = true;
+    }
+    if (eName.contains('duck') && (pName.contains('hook') || pName.contains('cross'))) {
+      eEvaded = true;
+      state.TheirEnergy = 20;
+      AudioService().playSFX('audios/special_move.mp3');
+      state.CardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+      state.CounteredWindowActiveForThem = true;
     }
     
-    // Logic: Slip vs Jab (Open Window)
+    // Logic: Slip vs Jab
     if (pName.contains('slip') && eName.contains('jab')) {
       pEvaded = true;
       state.YourEnergy = 20;
       AudioService().playSFX('audios/special_move.mp3');
-      state.EnemyCardState = CardStruct(name: 'Countered', energy: 0, damage: 0);
+      state.EnemyCardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+      state.CounteredWindowActiveForYou = true;
     }
     if (eName.contains('slip') && pName.contains('jab')) {
       eEvaded = true;
       state.TheirEnergy = 20;
       AudioService().playSFX('audios/special_move.mp3');
-      state.CardState = CardStruct(name: 'Countered', energy: 0, damage: 0);
+      state.CardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+      state.CounteredWindowActiveForThem = true;
     }
 
     // Logic: Counter vs Attack
@@ -109,11 +133,15 @@ class GameLogic {
       pEvaded = true;
       pDamageBonus += eCard.damage; // Reflect damage
       state.TheirEnergy -= 4; // Drain opponent energy
+      state.EnemyCardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+      state.CounteredWindowActiveForYou = true;
     }
     if (eName.contains('counter') && (pCard.damage > 0)) {
       eEvaded = true;
       eDamageBonus += pCard.damage;
       state.YourEnergy -= 4;
+      state.CardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+      state.CounteredWindowActiveForThem = true;
     }
 
     state.YouAvoided = pEvaded;
@@ -159,6 +187,10 @@ class GameLogic {
     state.ThierLife = state.ThierLife.clamp(0, 20);
     state.YourEnergy = state.YourEnergy.clamp(0, 20);
     state.TheirEnergy = state.TheirEnergy.clamp(0, 20);
+
+    // If a window was active entering this turn, it is now closed.
+    if (wasWindowForYou) state.CounteredWindowActiveForYou = false;
+    if (wasWindowForThem) state.CounteredWindowActiveForThem = false;
   }
 
   static Future<void> processPvPTurn(QueRecord match, bool isPlayerA) async {
@@ -197,6 +229,8 @@ class GameLogic {
         'PlayerBLife': state.ThierLife,
         'PlayerAEnergy': state.YourEnergy,
         'PlayerBEnergy': state.TheirEnergy,
+        'PlayerAWindow': state.CounteredWindowActiveForYou,
+        'PlayerBWindow': state.CounteredWindowActiveForThem,
         'PlayerACard': null,
         'PlayerBCard': null,
       });
@@ -246,5 +280,75 @@ class GameLogic {
     if (!RevenueCatService().isPro) {
       AdService().showInterstitialAd();
     }
+  }
+
+  static void resetTurnState(FFAppState state) {
+    state.YourCardPlayed = false;
+    state.TheirCardPlayed = false;
+    state.YouAvoided = false;
+    state.TheyAvoided = false;
+    state.CardState = CardStruct(name: 'N/A', energy: 0, damage: 0);
+    state.EnemyCardState = CardStruct(name: 'N/A', energy: 0, damage: 0);
+  }
+
+  static Future<void> initializeGame(FFAppState state) async {
+    // Reset state for new game
+    state.Library = [];
+    state.Hand = [];
+    state.YourCardPlayed = false;
+    state.TheirCardPlayed = false;
+    state.GameEnded = false;
+    state.GameEndedWin = false;
+    state.CounteredWindowActiveForYou = false;
+    state.CounteredWindowActiveForThem = false;
+    
+    // Reset Session Stats
+    state.SessionDamageDealt = 0;
+    state.SessionDamageTaken = 0;
+    state.SessionEnergySpent = 0;
+    state.SessionCardsPlayed = 0;
+    state.SessionEvades = 0;
+
+    // Get Cards from Firestore
+    final cardsCollection = await queryCardsRecordOnce();
+    
+    if (cardsCollection.isNotEmpty) {
+      for (final cardRecord in cardsCollection) {
+        state.addToLibrary(CardStruct(
+          energy: cardRecord.card.energy,
+          damage: cardRecord.card.damage,
+          prevents: cardRecord.card.prevents,
+          avoids: cardRecord.card.avoids.take(5).toList(),
+          image: cardRecord.card.image,
+          name: cardRecord.card.name,
+        ));
+      }
+    }
+
+    if (state.Library.isNotEmpty) {
+      for (int i = 0; i < 5; i++) {
+        final randomIndex = random_data.randomInteger(0, state.Library.length - 1);
+        final randomCard = state.Library.elementAtOrNull(randomIndex);
+        if (randomCard != null) {
+          state.addToHand(randomCard);
+        }
+      }
+    }
+
+    // Set Game Initial State
+    state.YourLife = 20;
+    state.ThierLife = 20;
+    state.TheirEnergy = 20;
+    state.YourEnergy = 20;
+    
+    if (state.ComputerNames.isNotEmpty) {
+      final nameIndex = random_data.randomInteger(0, state.ComputerNames.length - 1);
+      state.TheirName = state.ComputerNames.elementAt(nameIndex);
+    } else {
+      state.TheirName = "Computer";
+    }
+
+    state.GameEnded = false;
+    state.GameEndedWin = false;
   }
 }

@@ -99,7 +99,17 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
         if (match.hasPlayerACard() && match.hasPlayerBCard()) {
            WidgetsBinding.instance.addPostFrameCallback((_) async {
              await GameLogic.resolvePvPTurn(match, isPlayerA);
+             // After resolution, we might want to start a local timer to clear the UI
+             // But in PvP, the "next turn" is usually driven by the Stream
              safeSetState(() {});
+             
+             // Clear the resolution UI after a delay
+             Future.delayed(const Duration(milliseconds: 3000), () {
+               if (mounted) {
+                 GameLogic.resetTurnState(FFAppState());
+                 safeSetState(() {});
+               }
+             });
            });
         }
 
@@ -115,24 +125,86 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
       state.ThierLife = match.playerBLife;
       state.YourEnergy = match.playerAEnergy;
       state.TheirEnergy = match.playerBEnergy;
+      state.CounteredWindowActiveForYou = match.playerAWindow;
+      state.CounteredWindowActiveForThem = match.playerBWindow;
     } else {
       state.YourLife = match.playerBLife;
       state.ThierLife = match.playerALife;
       state.YourEnergy = match.playerBEnergy;
       state.TheirEnergy = match.playerAEnergy;
+      state.CounteredWindowActiveForYou = match.playerBWindow;
+      state.CounteredWindowActiveForThem = match.playerAWindow;
+    }
+  }
+
+  Future<void> _showResignDialog(QueRecord match, bool isPlayerA) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Resign Match?'),
+        content: const Text('Are you sure you want to resign? This will be counted as a loss.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Resign', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      if (isPlayerA) {
+        await match.reference.update({'PlayerALife': 0});
+      } else {
+        await match.reference.update({'PlayerBLife': 0});
+      }
+      if (mounted) {
+        context.goNamed(LandingPageWidget.routeName);
+      }
     }
   }
 
   Widget _buildUI(BuildContext context, QueRecord match, bool isPlayerA) {
-    return Scaffold(
-      key: scaffoldKey,
-      backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-      appBar: AppBar(
-        backgroundColor: FlutterFlowTheme.of(context).primary,
-        title: Text('PvP Battle', style: GoogleFonts.raleway(fontWeight: FontWeight.bold, color: Colors.white)),
-        centerTitle: true,
-      ),
-      body: SafeArea(
+    final state = FFAppState();
+
+    // Auto-Wait Logic for PvP
+    if (state.CounteredWindowActiveForThem && !state.YourCardPlayed && !state.GameEnded) {
+       WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 1500), () async {
+            if (!mounted || state.YourCardPlayed) return;
+            state.CardState = CardStruct(name: 'Wait', energy: 0, damage: 0);
+            await GameLogic.processPvPTurn(match, isPlayerA);
+            safeSetState(() {});
+          });
+       });
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (didPop) return;
+        _showResignDialog(match, isPlayerA);
+      },
+      child: Scaffold(
+        key: scaffoldKey,
+        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
+        appBar: AppBar(
+          backgroundColor: FlutterFlowTheme.of(context).primary,
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => _showResignDialog(match, isPlayerA),
+          ),
+          title: Text('Battle',
+              style: GoogleFonts.raleway(
+                  fontWeight: FontWeight.bold, color: Colors.white)),
+          centerTitle: true,
+        ),
+        body: SafeArea(
         child: Stack(
           children: [
             Column(
@@ -152,11 +224,96 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                 
                 Expanded(
                   child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        _buildPlayedCard(context, FFAppState().YourCardPlayed, FFAppState().CardState, 'You'),
-                        _buildPlayedCard(context, FFAppState().TheirCardPlayed, FFAppState().EnemyCardState, 'Opponent'),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Opacity(
+                              opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
+                              child: _buildPlayedCard(context, FFAppState().YourCardPlayed, FFAppState().CardState, 'You'),
+                            ),
+                            Opacity(
+                              opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
+                              child: _buildPlayedCard(context, FFAppState().TheirCardPlayed, FFAppState().EnemyCardState, 'Opponent'),
+                            ),
+                          ],
+                        ),
+                        if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().EnemyCardState.name.toLowerCase() == 'wait')
+                          Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(40),
+                              border: Border.all(color: Colors.amber, width: 4),
+                              boxShadow: [
+                                BoxShadow(blurRadius: 30, color: Colors.amber.withValues(alpha: 0.4))
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const FaIcon(FontAwesomeIcons.boltLightning, color: Colors.amber, size: 80)
+                                  .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "OPEN WINDOW!",
+                                  style: GoogleFonts.raleway(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.amber,
+                                    letterSpacing: 4,
+                                  ),
+                                ),
+                                Text(
+                                  "FREE ATTACK GRANTED",
+                                  style: GoogleFonts.raleway(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).shake(hz: 8, duration: 600.ms),
+                        if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().CardState.name.toLowerCase() == 'wait')
+                          Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(40),
+                              border: Border.all(color: Colors.red, width: 4),
+                              boxShadow: [
+                                BoxShadow(blurRadius: 30, color: Colors.red.withValues(alpha: 0.4))
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const FaIcon(FontAwesomeIcons.skullCrossbones, color: Colors.red, size: 80)
+                                  .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "COUNTERED!",
+                                  style: GoogleFonts.raleway(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.red,
+                                    letterSpacing: 4,
+                                  ),
+                                ),
+                                Text(
+                                  "OPPONENT GRANTED WINDOW",
+                                  style: GoogleFonts.raleway(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).shake(hz: 8, duration: 600.ms),
                       ],
                     ),
                   ),
@@ -192,8 +349,9 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildPlayerHeader(
     BuildContext context, 
@@ -306,71 +464,110 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
   }
 
   Widget _buildHand(BuildContext context, QueRecord match, bool isPlayerA) {
+    final state = FFAppState();
+    
     return Container(
       height: 160,
       color: FlutterFlowTheme.of(context).secondary,
-      child: Center(
-        child: ListView.builder(
-          shrinkWrap: true,
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          itemCount: FFAppState().Hand.length,
-          itemBuilder: (context, index) {
-            final card = FFAppState().Hand[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-              child: Draggable<CardStruct>(
-                data: card,
-                onDragStarted: () {
-                  if (FFAppState().YourCardPlayed) return;
-                },
-                feedback: Material(
-                  type: MaterialType.transparency,
-                  child: SizedBox(
-                    width: 80,
-                    height: 110,
-                    child: CardValueComponentWidget(componentCard: card),
-                  ),
-                ),
-                childWhenDragging: Opacity(
-                  opacity: 0.3,
-                  child: CardValueComponentWidget(componentCard: card),
-                ),
-                child: InkWell(
-                  onTap: () async {
-                    if (FFAppState().YourEnergy < card.energy) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Not enough energy!')),
-                      );
-                      return;
-                    }
-                    if (FFAppState().YourCardPlayed) return;
-                    FFAppState().CardState = card;
-
-                    // Replace played card with a new random one from library
-                    final lib = FFAppState().Library;
-                    if (lib.isNotEmpty) {
-                      final newCard = lib[random_data.randomInteger(0, lib.length - 1)];
-                      final hand = FFAppState().Hand;
-                      final index = hand.indexOf(card);
-                      if (index != -1) {
-                        hand[index] = newCard;
-                      }
-                    }
-
-                    await GameLogic.processPvPTurn(match, isPlayerA);
-                    setState(() {});
-                  },
-                  child: Opacity(
-                    opacity: FFAppState().YourCardPlayed ? 0.5 : 1.0,
-                    child: CardValueComponentWidget(componentCard: card),
-                  ),
+      child: state.CounteredWindowActiveForThem 
+        ? Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "YOU ARE COUNTERED!",
+                style: GoogleFonts.raleway(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
                 ),
               ),
-            );
-          },
-        ),
-      ),
+              const SizedBox(height: 8),
+              Text(
+                "AUTO-WAITING...",
+                style: GoogleFonts.raleway(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: Colors.redAccent, width: 2),
+                ),
+                child: const Center(
+                  child: Icon(Icons.hourglass_empty, color: Colors.redAccent, size: 24),
+                ),
+              ).animate(onPlay: (controller) => controller.repeat())
+               .rotate(duration: 2.seconds),
+            ],
+          )
+        : Center(
+            child: ListView.builder(
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: FFAppState().Hand.length,
+              itemBuilder: (context, index) {
+                final card = FFAppState().Hand[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                  child: Draggable<CardStruct>(
+                    data: card,
+                    onDragStarted: () {
+                      if (FFAppState().YourCardPlayed) return;
+                    },
+                    feedback: Material(
+                      type: MaterialType.transparency,
+                      child: SizedBox(
+                        width: 80,
+                        height: 110,
+                        child: CardValueComponentWidget(componentCard: card),
+                      ),
+                    ),
+                    childWhenDragging: Opacity(
+                      opacity: 0.3,
+                      child: CardValueComponentWidget(componentCard: card),
+                    ),
+                    child: InkWell(
+                      onTap: () async {
+                        if (FFAppState().YourEnergy < card.energy) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Not enough energy!')),
+                          );
+                          return;
+                        }
+                        if (FFAppState().YourCardPlayed) return;
+                        FFAppState().CardState = card;
+
+                        // Replace played card with a new random one from library
+                        final lib = FFAppState().Library;
+                        if (lib.isNotEmpty) {
+                          final newCard = lib[random_data.randomInteger(0, lib.length - 1)];
+                          final hand = FFAppState().Hand;
+                          final index = hand.indexOf(card);
+                          if (index != -1) {
+                            hand[index] = newCard;
+                          }
+                        }
+
+                        await GameLogic.processPvPTurn(match, isPlayerA);
+                        setState(() {});
+                      },
+                      child: Opacity(
+                        opacity: FFAppState().YourCardPlayed ? 0.5 : 1.0,
+                        child: CardValueComponentWidget(componentCard: card),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
     );
   }
 }

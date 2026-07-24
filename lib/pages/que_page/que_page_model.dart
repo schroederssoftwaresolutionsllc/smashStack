@@ -13,6 +13,7 @@ class QuePageModel extends FlutterFlowModel<QuePageWidget> {
   // Stores action output result for [Backend Call - Create Document] action in QuePage widget.
   QueRecord? generateNewQueDoc;
   InstantTimer? newInstantTimer;
+  DateTime? pairWaitStartTime;
   // Stores action output result for [Backend Call - Read Document] action in QuePage widget.
   QueRecord? readingNewQueDoc;
 

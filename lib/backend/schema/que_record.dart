@@ -46,6 +46,14 @@ class QueRecord extends FirestoreRecord {
   int get playerBEnergy => _playerBEnergy ?? 20;
   bool hasPlayerBEnergy() => _playerBEnergy != null;
 
+  bool? _playerAWindow;
+  bool get playerAWindow => _playerAWindow ?? false;
+  bool hasPlayerAWindow() => _playerAWindow != null;
+
+  bool? _playerBWindow;
+  bool get playerBWindow => _playerBWindow ?? false;
+  bool hasPlayerBWindow() => _playerBWindow != null;
+
   void _initializeFields() {
     _playerA = snapshotData['PlayerA'] as String?;
     _playerB = snapshotData['PlayerB'] as String?;
@@ -55,6 +63,8 @@ class QueRecord extends FirestoreRecord {
     _playerBLife = castToType<int>(snapshotData['PlayerBLife']);
     _playerAEnergy = castToType<int>(snapshotData['PlayerAEnergy']);
     _playerBEnergy = castToType<int>(snapshotData['PlayerBEnergy']);
+    _playerAWindow = snapshotData['PlayerAWindow'] as bool?;
+    _playerBWindow = snapshotData['PlayerBWindow'] as bool?;
   }
 
   static CollectionReference get collection =>
@@ -99,6 +109,8 @@ Map<String, dynamic> createQueRecordData({
   int? playerBLife,
   int? playerAEnergy,
   int? playerBEnergy,
+  bool? playerAWindow,
+  bool? playerBWindow,
 }) {
   final firestoreData = mapToFirestore(
     <String, dynamic>{
@@ -110,6 +122,8 @@ Map<String, dynamic> createQueRecordData({
       'PlayerBLife': playerBLife,
       'PlayerAEnergy': playerAEnergy,
       'PlayerBEnergy': playerBEnergy,
+      'PlayerAWindow': playerAWindow,
+      'PlayerBWindow': playerBWindow,
     }.withoutNulls,
   );
 

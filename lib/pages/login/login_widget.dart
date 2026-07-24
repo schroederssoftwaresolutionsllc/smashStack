@@ -88,13 +88,25 @@ class _LoginWidgetState extends State<LoginWidget>
                         mainAxisSize: MainAxisSize.max,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
+                          Container(
+                            width: MediaQuery.sizeOf(context).width * 0.7,
+                            height: MediaQuery.sizeOf(context).width * 0.7,
+                            clipBehavior: Clip.antiAlias,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24.0),
+                              boxShadow: [
+                                BoxShadow(
+                                  blurRadius: 12.0,
+                                  color: Color(0x33000000),
+                                  offset: Offset(0.0, 6.0),
+                                )
+                              ],
+                            ),
+                            padding: EdgeInsets.all(20.0),
                             child: Image.asset(
-                              'assets/images/SMash_Stack_PNG_FROM_SVG.png',
-                              width: 200.0,
-                              height: 377.8,
-                              fit: BoxFit.cover,
+                              'assets/images/adaptive_foreground_icon.png',
+                              fit: BoxFit.contain,
                             ),
                           ).animateOnPageLoad(
                               animationsMap['imageOnPageLoadAnimation']!),

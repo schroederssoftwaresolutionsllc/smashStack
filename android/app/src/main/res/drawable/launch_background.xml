@@ -4,6 +4,8 @@
     <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
+            android:src="@mipmap/launch_image"
+            android:filter="true"
+            android:antialias="true" />
     </item>
 </layer-list>

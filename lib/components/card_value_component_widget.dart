@@ -50,16 +50,19 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
     if (lowerName.contains('rest')) {
       iconData = Icons.bedtime;
       iconColor = Colors.cyan;
+    } else if (lowerName.contains('wait')) {
+      iconData = Icons.hourglass_empty;
+      iconColor = Colors.grey;
     } else if (lowerName.contains('block') || lowerName.contains('defend') || lowerName.contains('shield')) {
       iconData = Icons.shield;
       iconColor = Colors.blueGrey;
-    } else if (lowerName.contains('evade') || lowerName.contains('dodge') || lowerName.contains('duck') || lowerName.contains('slip')) {
+    } else if (lowerName.contains('evade') || lowerName.contains('dodge') || lowerName.contains('duck') || lowerName.contains('slip') || lowerName.contains('pull')) {
       iconData = Icons.run_circle;
       iconColor = Colors.green;
     } else if (lowerName.contains('jab') || lowerName.contains('quick')) {
       iconData = FontAwesomeIcons.handFist;
       iconColor = Colors.orange;
-    } else if (lowerName.contains('hook') || lowerName.contains('smash') || lowerName.contains('attack') || lowerName.contains('pull') || lowerName.contains('hit') || lowerName.contains('cross')) {
+    } else if (lowerName.contains('hook') || lowerName.contains('smash') || lowerName.contains('attack') || lowerName.contains('hit') || lowerName.contains('cross')) {
       iconData = FontAwesomeIcons.handFist;
       iconColor = Colors.redAccent;
     } else {
@@ -83,6 +86,8 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isCountered = widget.componentCard?.name.toLowerCase() == 'wait';
+
     return Container(
       width: 75.0,
       height: 105.0,
@@ -97,110 +102,142 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
         ],
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: FlutterFlowTheme.of(context).primary,
+          color: isCountered ? Colors.red : FlutterFlowTheme.of(context).primary,
           width: 2.0,
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.max,
+      child: Stack(
         children: [
-          // Header: Energy & Damage
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            decoration: BoxDecoration(
-              color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.1),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                topRight: Radius.circular(10),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.bolt, color: Colors.amber, size: 14),
-                    Text(
-                      '${widget.componentCard?.energy ?? 0}',
-                      style: FlutterFlowTheme.of(context).bodySmall.override(
-                            font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
-                            fontSize: 12,
-                          ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    FaIcon(FontAwesomeIcons.handFist, color: Colors.redAccent, size: 12),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${widget.componentCard?.damage ?? 0}',
-                      style: FlutterFlowTheme.of(context).bodySmall.override(
-                            font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
-                            fontSize: 12,
-                          ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Main Body: Image or Icon
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Builder(
-                  builder: (context) {
-                    final cardName = widget.componentCard?.name ?? 'N/A';
-                    final imageUrl = widget.componentCard?.image ?? 'N/A';
-                    
-                    if (imageUrl != 'N/A' && imageUrl.isNotEmpty) {
-                      String finalUrl = imageUrl;
-                      if (imageUrl.startsWith('gs://')) {
-                        try {
-                          final uri = Uri.parse(imageUrl);
-                          final path = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
-                          finalUrl = 'https://firebasestorage.googleapis.com/v0/b/smash-stack-7a6b6.firebasestorage.app/o/${Uri.encodeComponent(path)}?alt=media';
-                        } catch (_) {}
-                      }
-                      return Image.network(
-                        finalUrl,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildTypeIcon(cardName),
-                      );
-                    }
-                    return _buildTypeIcon(cardName);
-                  },
-                ),
-              ),
-            ),
-          ),
-          // Footer: Name
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.05),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(10),
-                bottomRight: Radius.circular(10),
-              ),
-            ),
-            child: Text(
-              widget.componentCard?.name ?? 'N/A',
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: FlutterFlowTheme.of(context).bodySmall.override(
-                    font: GoogleFonts.raleway(fontWeight: FontWeight.w800),
-                    fontSize: 10.0,
+          Column(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Header: Energy & Damage
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.1),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(10),
+                    topRight: Radius.circular(10),
                   ),
-            ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.bolt, color: Colors.amber, size: 14),
+                        Text(
+                          '${widget.componentCard?.energy ?? 0}',
+                          style: FlutterFlowTheme.of(context).bodySmall.override(
+                                font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
+                                fontSize: 12,
+                              ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        FaIcon(FontAwesomeIcons.handFist, color: Colors.redAccent, size: 12),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${widget.componentCard?.damage ?? 0}',
+                          style: FlutterFlowTheme.of(context).bodySmall.override(
+                                font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
+                                fontSize: 12,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Main Body: Image or Icon
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8.0),
+                    child: Builder(
+                      builder: (context) {
+                        final cardName = widget.componentCard?.name ?? 'N/A';
+                        final imageUrl = widget.componentCard?.image ?? 'N/A';
+                        
+                        if (imageUrl != 'N/A' && imageUrl.isNotEmpty) {
+                          String finalUrl = imageUrl;
+                          if (imageUrl.startsWith('gs://')) {
+                            try {
+                              final uri = Uri.parse(imageUrl);
+                              final path = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
+                              finalUrl = 'https://firebasestorage.googleapis.com/v0/b/smash-stack-7a6b6.firebasestorage.app/o/${Uri.encodeComponent(path)}?alt=media';
+                            } catch (_) {}
+                          }
+                          return Image.network(
+                            finalUrl,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => _buildTypeIcon(cardName),
+                          );
+                        }
+                        return _buildTypeIcon(cardName);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              // Footer: Name
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(10),
+                    bottomRight: Radius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  widget.componentCard?.name ?? 'N/A',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: FlutterFlowTheme.of(context).bodySmall.override(
+                        font: GoogleFonts.raleway(fontWeight: FontWeight.w800),
+                        fontSize: 10.0,
+                      ),
+                ),
+              ),
+            ],
           ),
+          if (isCountered)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Transform.rotate(
+                  angle: -0.5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.white, width: 1),
+                    ),
+                    child: Text(
+                      'COUNTERED',
+                      style: GoogleFonts.robotoCondensed(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
