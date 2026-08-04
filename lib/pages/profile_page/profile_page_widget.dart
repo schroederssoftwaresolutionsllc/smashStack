@@ -4,8 +4,10 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/services/revenue_cat_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'profile_page_model.dart';
 export 'profile_page_model.dart';
 
@@ -73,52 +75,109 @@ class _ProfilePageWidgetState extends State<ProfilePageWidget> {
                 return Center(child: CircularProgressIndicator());
               }
               final stats = snapshot.data!.firstOrNull;
-              return Padding(
-                padding: EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: NetworkImage(currentUserPhoto),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      currentUserDisplayName,
-                      style: FlutterFlowTheme.of(context).headlineSmall,
-                    ),
-                    SizedBox(height: 32),
-                    _buildStatRow(context, 'Wins', stats?.wins.toString() ?? '0', Icons.emoji_events, Colors.amber),
-                    _buildStatRow(context, 'Losses', stats?.losses.toString() ?? '0', Icons.close, Colors.red),
-                    _buildStatRow(context, 'Win Rate', '${stats?.winPercentage ?? 0}%', Icons.show_chart, Colors.green),
-                    _buildStatRow(context, 'Streak', stats?.winningStreak.toString() ?? '0', Icons.whatshot, Colors.orange),
-                    Spacer(),
-                    if (!RevenueCatService().isPro)
-                      FFButtonWidget(
-                        onPressed: () async {
-                          bool success = await RevenueCatService().purchasePro();
-                          if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Ads Removed Permanently!')),
-                            );
-                            setState(() {});
-                          }
-                        },
-                        text: 'Remove Ads Permanently - \$2',
-                        options: FFButtonOptions(
-                          width: double.infinity,
-                          height: 50,
-                          color: FlutterFlowTheme.of(context).tertiary,
-                          textStyle: FlutterFlowTheme.of(context).titleMedium.override(
-                            font: GoogleFonts.raleway(fontWeight: FontWeight.bold),
-                            color: Colors.white,
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundImage: NetworkImage(currentUserPhoto),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        currentUserDisplayName,
+                        style: FlutterFlowTheme.of(context).headlineSmall,
+                      ),
+                      SizedBox(height: 32),
+                      _buildStatRow(context, 'Wins', stats?.wins.toString() ?? '0', Icons.emoji_events, Colors.amber),
+                      _buildStatRow(context, 'Losses', stats?.losses.toString() ?? '0', Icons.close, Colors.red),
+                      _buildStatRow(context, 'Win Rate', '${stats?.winPercentage ?? 0}%', Icons.show_chart, Colors.green),
+                      _buildStatRow(context, 'Streak', stats?.winningStreak.toString() ?? '0', Icons.whatshot, Colors.orange),
+                      SizedBox(height: 32),
+                      if (!Provider.of<RevenueCatService>(context).isPro)
+                        FFButtonWidget(
+                          onPressed: () async {
+                            bool success = await Provider.of<RevenueCatService>(context, listen: false).presentPaywall();
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Ads Removed Permanently! Welcome to Pro!')),
+                              );
+                            }
+                          },
+                          text: 'Remove Ads Permanently - \$2',
+                          options: FFButtonOptions(
+                            width: double.infinity,
+                            height: 50,
+                            color: FlutterFlowTheme.of(context).tertiary,
+                            textStyle: FlutterFlowTheme.of(context).titleMedium.override(
+                              font: GoogleFonts.raleway(fontWeight: FontWeight.bold),
+                              color: Colors.white,
+                            ),
+                            elevation: 3,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 3,
-                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      if (Provider.of<RevenueCatService>(context).isPro)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: FlutterFlowTheme.of(context).secondary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: FlutterFlowTheme.of(context).secondary, width: 2),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_circle, color: FlutterFlowTheme.of(context).secondary),
+                              SizedBox(width: 12),
+                              Text(
+                                'PRO STATUS ACTIVE',
+                                style: FlutterFlowTheme.of(context).bodyMedium.override(
+                                  font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.w900),
+                                  color: FlutterFlowTheme.of(context).secondary,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      
+                      // Debug Info
+                      if (kDebugMode)
+                        Padding(
+                          padding: EdgeInsets.only(top: 20),
+                          child: Container(
+                            padding: EdgeInsets.all(8),
+                            color: Colors.black12,
+                            child: Text(
+                              "DEBUG: ${Provider.of<RevenueCatService>(context).debugEntitlementInfo}",
+                              style: TextStyle(fontSize: 10, color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+
+                      SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () async {
+                          bool success = await Provider.of<RevenueCatService>(context, listen: false).restorePurchases();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(success ? 'Purchases Restored!' : 'No previous purchases found.')),
+                          );
+                        },
+                        child: Text(
+                          'Restore Purchases',
+                          style: TextStyle(
+                            color: FlutterFlowTheme.of(context).secondaryText,
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ),
-                    SizedBox(height: 20),
-                  ],
+                      SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               );
             },

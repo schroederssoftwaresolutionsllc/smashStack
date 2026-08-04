@@ -88,14 +88,16 @@ class _GameEndedDisplayComponentWidgetState
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
-    final screenHeight = MediaQuery.of(context).size.height;
-    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    final mediaQuery = MediaQuery.of(context);
+    final screenHeight = mediaQuery.size.height;
+    final screenWidth = mediaQuery.size.width;
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
 
     return Center(
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: screenHeight * 0.9,
-          maxWidth: MediaQuery.of(context).size.width * (isLandscape ? 0.6 : 0.85),
+          maxHeight: screenHeight * (isLandscape ? 0.85 : 0.8),
+          maxWidth: screenWidth * (isLandscape ? 0.7 : 0.9),
         ),
         child: Card(
           elevation: 10,
@@ -112,10 +114,10 @@ class _GameEndedDisplayComponentWidgetState
                 end: Alignment.bottomRight,
               ),
             ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: EdgeInsets.all(isLandscape ? 16 : 24),
+            child: Padding(
+              padding: EdgeInsets.all(isLandscape ? 12 : 20),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -127,20 +129,21 @@ class _GameEndedDisplayComponentWidgetState
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: isLandscape ? 8 : 16),
+                    if (!isLandscape) const SizedBox(height: 16),
                     Text(
                       FFAppState().GameEndedWin ? 'You have smashed the stack!' : 'The stack was too much this time.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: isLandscape ? 14 : 16),
+                      style: TextStyle(color: Colors.white70, fontSize: isLandscape ? 12 : 16),
                     ),
-                    SizedBox(height: isLandscape ? 12 : 24),
+                    SizedBox(height: isLandscape ? 8 : 24),
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(isLandscape ? 8 : 16),
                       decoration: BoxDecoration(
                         color: Colors.white10,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           _buildStatRow('Cards Played', FFAppState().SessionCardsPlayed.toString()),
                           _buildStatRow('Damage Dealt', FFAppState().SessionDamageDealt.toString()),
@@ -150,7 +153,7 @@ class _GameEndedDisplayComponentWidgetState
                         ],
                       ),
                     ),
-                    SizedBox(height: isLandscape ? 16 : 32),
+                    SizedBox(height: isLandscape ? 12 : 32),
                     FFButtonWidget(
                       onPressed: () async {
                         GameLogic.showPostGameAd();

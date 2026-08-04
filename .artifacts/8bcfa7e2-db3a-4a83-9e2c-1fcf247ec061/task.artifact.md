@@ -1,6 +1,6 @@
-- [x] Make `CardValueComponentWidget` responsive using `AspectRatio` and `LayoutBuilder`
-- [x] Implement `OrientationBuilder` and `LayoutBuilder` in `BattleZonePlayCompWidget`
-- [x] Implement `OrientationBuilder` and `LayoutBuilder` in `BattleZonePlayHumWidget`
-- [x] Refactor `_buildPlayerHeader` for compact display on small heights
-- [x] Adjust Hand container height to be dynamic
-- [x] Verify layout logic for landscape mode
+- [x] Update `_buildPlayerHeader` for compact portrait layout in both battle widgets
+- [/] Implement `Flexible` vertical layout in `BattleZonePlayCompWidget`
+- [ ] Implement `Flexible` vertical layout in `BattleZonePlayHumWidget`
+- [ ] Optimize Hand Area (Row-based) for portrait fit
+- [ ] Refine `CardValueComponentWidget` scaling for micro-sizes
+- [ ] Verify fit on iPhone 16e aspect ratio

@@ -9,6 +9,7 @@ import '/services/game_logic.dart';
 import '/services/audio_service.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/index.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -227,28 +228,38 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                       ),
                       
                       Expanded(
-                        child: Center(
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Opacity(
-                                    opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
-                                    child: _buildPlayedCard(context, FFAppState().YourCardPlayed, FFAppState().CardState, 'You', isLandscape: isLandscape, screenHeight: screenHeight),
-                                  ),
-                                  Opacity(
-                                    opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
-                                    child: _buildPlayedCard(context, FFAppState().TheirCardPlayed, FFAppState().EnemyCardState, 'Opponent', isLandscape: isLandscape, screenHeight: screenHeight),
-                                  ),
-                                ],
-                              ),
-                              if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().EnemyCardState.name.toLowerCase() == 'wait')
-                                _buildOverlayMessage(context, "OPEN WINDOW!", "FREE ATTACK GRANTED", Colors.amber, FontAwesomeIcons.boltLightning, isLandscape: isLandscape),
-                              if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().CardState.name.toLowerCase() == 'wait')
-                                _buildOverlayMessage(context, "COUNTERED!", "OPPONENT GRANTED WINDOW", Colors.red, FontAwesomeIcons.skullCrossbones, isLandscape: isLandscape),
-                            ],
+                        flex: isLandscape ? 1 : 4,
+                        child: Container(
+                          width: double.infinity,
+                          child: LayoutBuilder(
+                            builder: (context, battleConstraints) {
+                              final battleHeight = battleConstraints.maxHeight;
+                              
+                              return Center(
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Opacity(
+                                          opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
+                                          child: _buildPlayedCard(context, FFAppState().YourCardPlayed, FFAppState().CardState, 'You', isLandscape: isLandscape, screenHeight: battleHeight),
+                                        ),
+                                        Opacity(
+                                          opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
+                                          child: _buildPlayedCard(context, FFAppState().TheirCardPlayed, FFAppState().EnemyCardState, 'Opponent', isLandscape: isLandscape, screenHeight: battleHeight),
+                                        ),
+                                      ],
+                                    ),
+                                    if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().EnemyCardState.name.toLowerCase() == 'wait')
+                                      _buildOverlayMessage(context, "OPEN WINDOW!", "FREE ATTACK GRANTED", Colors.amber, FontAwesomeIcons.boltLightning, isLandscape: isLandscape),
+                                    if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().CardState.name.toLowerCase() == 'wait')
+                                      _buildOverlayMessage(context, "COUNTERED!", "OPPONENT GRANTED WINDOW", Colors.red, FontAwesomeIcons.skullCrossbones, isLandscape: isLandscape),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -270,7 +281,13 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                       ),
 
                       // Your Hand
-                      _buildHand(context, match, isPlayerA, isLandscape, screenHeight),
+                      Flexible(
+                        flex: isLandscape ? 0 : 2,
+                        child: Container(
+                          height: isLandscape ? (screenHeight * 0.3).clamp(80.0, 120.0) : null,
+                          child: _buildHand(context, match, isPlayerA, isLandscape, screenHeight),
+                        ),
+                      ),
                     ],
                   ),
                   if (FFAppState().GameEnded)
@@ -338,7 +355,8 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
     {String? avatarUrl, bool isHit = false, bool isEnergyGained = false, bool isEnergyLost = false, required bool isLandscape}
   ) {
     return Container(
-      padding: EdgeInsets.all(isLandscape ? 4 : 12),
+      height: isLandscape ? null : 50,
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: isLandscape ? 4 : 2),
       color: isOpponent ? Colors.black26 : Colors.black12,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -347,7 +365,7 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
             children: [
               if (avatarUrl != null)
                 Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
+                  padding: const EdgeInsets.only(right: 6.0),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
@@ -357,7 +375,7 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                           border: isHit ? Border.all(color: Colors.red, width: isLandscape ? 2 : 3) : null,
                         ),
                         child: CircleAvatar(
-                          radius: isLandscape ? 16 : 24,
+                          radius: isLandscape ? 16 : 18,
                           backgroundImage: NetworkImage(avatarUrl),
                           backgroundColor: Colors.white10,
                         ).animate(target: isHit ? 1 : 0)
@@ -365,13 +383,27 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                          .tint(color: Colors.red.withValues(alpha: 0.7), duration: 200.ms),
                       ),
                       if (isHit)
-                        FaIcon(FontAwesomeIcons.burst, color: Colors.yellow, size: isLandscape ? 24 : 40)
+                        FaIcon(FontAwesomeIcons.burst, color: Colors.yellow, size: isLandscape ? 24 : 28)
                           .animate().scale(duration: 300.ms, curve: Curves.elasticOut)
                           .fadeOut(delay: 400.ms),
                     ],
                   ),
                 ),
-              Text(name, style: isLandscape ? FlutterFlowTheme.of(context).titleSmall : FlutterFlowTheme.of(context).titleMedium),
+              SizedBox(
+                width: MediaQuery.of(context).size.width * (isLandscape ? 0.2 : 0.25),
+                child: AutoSizeText(
+                  name,
+                  maxLines: 1,
+                  minFontSize: 8,
+                  style: isLandscape 
+                    ? FlutterFlowTheme.of(context).titleSmall 
+                    : FlutterFlowTheme.of(context).titleMedium.override(
+                        font: GoogleFonts.raleway(),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ),
             ],
           ),
           Row(
@@ -380,38 +412,38 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.favorite, color: Colors.red, size: isLandscape ? 24 : 32)
+                  Icon(Icons.favorite, color: Colors.red, size: isLandscape ? 24 : 26)
                     .animate(target: isHit ? 1 : 0)
                     .scale(begin: const Offset(1,1), end: const Offset(1.5, 1.5), duration: 300.ms, curve: Curves.bounceOut)
                     .then()
                     .scale(begin: const Offset(1.5,1.5), end: const Offset(1, 1), duration: 300.ms),
                   if (isHit)
-                    Text("-HP", style: GoogleFonts.robotoCondensed(color: Colors.white, fontWeight: FontWeight.w900, fontSize: isLandscape ? 8 : 10))
+                    Text("-HP", style: GoogleFonts.robotoCondensed(color: Colors.white, fontWeight: FontWeight.w900, fontSize: isLandscape ? 8 : 9))
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                 ],
               ),
               const SizedBox(width: 4),
-              Text('$life', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 22, fontWeight: FontWeight.bold)),
-              SizedBox(width: isLandscape ? 12 : 24),
+              Text('$life', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 18, fontWeight: FontWeight.bold)),
+              SizedBox(width: isLandscape ? 12 : 12),
               // Energy Icon
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.bolt, color: Colors.amber, size: isLandscape ? 24 : 32)
+                  Icon(Icons.bolt, color: Colors.amber, size: isLandscape ? 24 : 26)
                     .animate(target: isEnergyGained || isEnergyLost ? 1 : 0)
                     .scale(begin: const Offset(1,1), end: const Offset(1.5, 1.5), duration: 300.ms, curve: Curves.elasticOut)
                     .then()
                     .scale(begin: const Offset(1.5,1.5), end: const Offset(1, 1), duration: 300.ms),
                   if (isEnergyGained)
-                    Icon(Icons.add, color: Colors.green, size: isLandscape ? 14 : 20)
+                    Icon(Icons.add, color: Colors.green, size: isLandscape ? 14 : 16)
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                   if (isEnergyLost)
-                    Icon(Icons.remove, color: Colors.orange, size: isLandscape ? 14 : 20)
+                    Icon(Icons.remove, color: Colors.orange, size: isLandscape ? 14 : 16)
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                 ],
               ),
               const SizedBox(width: 4),
-              Text('$energy', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 22, fontWeight: FontWeight.bold)),
+              Text('$energy', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 18, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -420,23 +452,27 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
   }
 
   Widget _buildPlayedCard(BuildContext context, bool played, CardStruct card, String label, {required bool isLandscape, required double screenHeight}) {
-    final cardHeight = isLandscape ? (screenHeight * 0.4).clamp(60.0, 120.0) : 140.0;
+    // Ultra-aggressive scaling for iPhone 16e portrait
+    final cardHeight = isLandscape 
+        ? (screenHeight * 0.32).clamp(50.0, 95.0) 
+        : (screenHeight * 0.15).clamp(80.0, 120.0);
     
     return Column(
       mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(label, style: isLandscape ? FlutterFlowTheme.of(context).bodySmall.override(font: GoogleFonts.raleway(), fontSize: 10) : FlutterFlowTheme.of(context).bodySmall),
-        SizedBox(height: 4),
+        Text(label, style: isLandscape ? FlutterFlowTheme.of(context).bodySmall.override(font: GoogleFonts.raleway(), fontSize: 10) : FlutterFlowTheme.of(context).bodySmall.override(font: GoogleFonts.raleway(), fontSize: 11)),
+        SizedBox(height: isLandscape ? 1 : 2),
         Container(
           height: cardHeight,
           decoration: BoxDecoration(
             color: FlutterFlowTheme.of(context).secondaryBackground,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: FlutterFlowTheme.of(context).primary, width: 2),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: FlutterFlowTheme.of(context).primary, width: 1.5),
           ),
           child: AspectRatio(
             aspectRatio: 3/4,
-            child: played ? CardValueComponentWidget(componentCard: card) : Icon(Icons.help_outline, size: isLandscape ? 24 : 48, color: Colors.grey),
+            child: played ? CardValueComponentWidget(componentCard: card) : Icon(Icons.help_outline, size: isLandscape ? 20 : 30, color: Colors.grey),
           ),
         ),
       ],
@@ -445,10 +481,8 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
 
   Widget _buildHand(BuildContext context, QueRecord match, bool isPlayerA, bool isLandscape, double screenHeight) {
     final state = FFAppState();
-    final handHeight = isLandscape ? (screenHeight * 0.3).clamp(80.0, 120.0) : 160.0;
     
     return Container(
-      height: handHeight,
       color: FlutterFlowTheme.of(context).secondary,
       child: state.CounteredWindowActiveForThem 
         ? Column(
@@ -459,29 +493,29 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                 style: GoogleFonts.raleway(
                   color: Colors.redAccent,
                   fontWeight: FontWeight.w900,
-                  fontSize: isLandscape ? 14 : 18,
+                  fontSize: isLandscape ? 14 : 16,
                 ),
               ),
-              if (!isLandscape) const SizedBox(height: 8),
+              if (!isLandscape) const SizedBox(height: 4),
               Text(
                 "AUTO-WAITING...",
                 style: GoogleFonts.raleway(
                   color: Colors.white70,
-                  fontSize: isLandscape ? 10 : 12,
+                  fontSize: isLandscape ? 10 : 10,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: isLandscape ? 4 : 12),
+              SizedBox(height: isLandscape ? 4 : 8),
               Container(
-                width: isLandscape ? 30 : 50,
-                height: isLandscape ? 30 : 50,
+                width: isLandscape ? 30 : 40,
+                height: isLandscape ? 30 : 40,
                 decoration: BoxDecoration(
                   color: Colors.white10,
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(color: Colors.redAccent, width: 2),
                 ),
                 child: Center(
-                  child: Icon(Icons.hourglass_empty, color: Colors.redAccent, size: isLandscape ? 16 : 24),
+                  child: Icon(Icons.hourglass_empty, color: Colors.redAccent, size: isLandscape ? 16 : 20),
                 ),
               ).animate(onPlay: (controller) => controller.repeat())
                .rotate(duration: 2.seconds),
@@ -495,10 +529,12 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
               itemCount: FFAppState().Hand.length,
               itemBuilder: (context, index) {
                 final card = FFAppState().Hand[index];
-                final cardHeight = isLandscape ? (screenHeight * 0.25).clamp(70.0, 110.0) : 120.0;
+                final cardHeight = isLandscape 
+                    ? (screenHeight * 0.25).clamp(70.0, 110.0) 
+                    : (screenHeight * 0.14).clamp(70.0, 110.0);
 
                 return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.0, vertical: isLandscape ? 2.0 : 8.0),
+                  padding: EdgeInsets.symmetric(horizontal: 4.0, vertical: isLandscape ? 2.0 : 2.0),
                   child: Draggable<CardStruct>(
                     data: card,
                     onDragStarted: () {

@@ -141,6 +141,7 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
                     ),
                     
                     Expanded(
+                      flex: isLandscape ? 1 : 4,
                       child: Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -150,138 +151,144 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
                             end: Alignment.bottomCenter,
                           ),
                         ),
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: DragTarget<CardStruct>(
-                                onAcceptWithDetails: (details) async {
-                                  final card = details.data;
-                                  if (state.YourEnergy < card.energy) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Not enough energy!')),
-                                    );
-                                    return;
-                                  }
-                                  
-                                  state.CardState = card;
-                                  state.YourCardPlayed = true;
-                                  safeSetState(() {});
+                        child: LayoutBuilder(
+                          builder: (context, battleConstraints) {
+                            final battleHeight = battleConstraints.maxHeight;
+                            
+                            return Stack(
+                              children: [
+                                Center(
+                                  child: DragTarget<CardStruct>(
+                                    onAcceptWithDetails: (details) async {
+                                      final card = details.data;
+                                      if (state.YourEnergy < card.energy) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Not enough energy!')),
+                                        );
+                                        return;
+                                      }
+                                      
+                                      state.CardState = card;
+                                      state.YourCardPlayed = true;
+                                      safeSetState(() {});
 
-                                  final lib = state.Library;
-                                  if (lib.isNotEmpty) {
-                                    final newCard = lib[random_data.randomInteger(0, lib.length - 1)];
-                                    final hand = state.Hand;
-                                    final index = hand.indexOf(card);
-                                    if (index != -1) hand[index] = newCard;
-                                  }
+                                      final lib = state.Library;
+                                      if (lib.isNotEmpty) {
+                                        final newCard = lib[random_data.randomInteger(0, lib.length - 1)];
+                                        final hand = state.Hand;
+                                        final index = hand.indexOf(card);
+                                        if (index != -1) hand[index] = newCard;
+                                      }
 
-                                  await Future.delayed(const Duration(milliseconds: 1000));
-                                  
-                                  await GameLogic.processTurn(context, isRevealing: true);
-                                  _model.gameTimerController.onStartTimer();
-                                  safeSetState(() {});
-                                },
-                                builder: (context, candidateData, rejectedData) {
-                                  final isHovering = candidateData.isNotEmpty;
-                                  final youCountered = state.YourCardPlayed && state.TheirCardPlayed && state.EnemyCardState.name.toLowerCase() == 'wait';
-                                  final theyCountered = state.YourCardPlayed && state.TheirCardPlayed && state.CardState.name.toLowerCase() == 'wait';
+                                      await Future.delayed(const Duration(milliseconds: 1000));
+                                      
+                                      await GameLogic.processTurn(context, isRevealing: true);
+                                      _model.gameTimerController.onStartTimer();
+                                      safeSetState(() {});
+                                    },
+                                    builder: (context, candidateData, rejectedData) {
+                                      final isHovering = candidateData.isNotEmpty;
+                                      final youCountered = state.YourCardPlayed && state.TheirCardPlayed && state.EnemyCardState.name.toLowerCase() == 'wait';
+                                      final theyCountered = state.YourCardPlayed && state.TheirCardPlayed && state.CardState.name.toLowerCase() == 'wait';
 
-                                  return Container(
-                                    width: constraints.maxWidth * 0.95,
-                                    margin: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: isHovering ? Colors.white10 : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: isHovering ? Border.all(color: Colors.white24, width: 2) : null,
-                                    ),
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        Opacity(
-                                          opacity: (youCountered || theyCountered) ? 0.3 : 1.0,
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                            children: [
-                                              Flexible(
-                                                child: _buildPlayedCard(
-                                                  context,
-                                                  state.YourCardPlayed,
-                                                  state.CardState,
-                                                  'You',
-                                                  isLandscape: isLandscape,
-                                                  screenHeight: screenHeight,
-                                                ),
-                                              ),
-                                              Flexible(
-                                                child: _buildPlayedCard(
-                                                  context,
-                                                  state.TheirCardPlayed,
-                                                  state.EnemyCardState,
-                                                  'Opponent',
-                                                  isLandscape: isLandscape,
-                                                  screenHeight: screenHeight,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                      return Container(
+                                        width: constraints.maxWidth * 0.95,
+                                        margin: EdgeInsets.all(isLandscape ? 2 : 4),
+                                        decoration: BoxDecoration(
+                                          color: isHovering ? Colors.white10 : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: isHovering ? Border.all(color: Colors.white24, width: 2) : null,
                                         ),
-                                        if (youCountered)
-                                          _buildOverlayMessage(
-                                            context,
-                                            "OPEN WINDOW!",
-                                            "FREE ATTACK GRANTED",
-                                            Colors.amber,
-                                            FontAwesomeIcons.boltLightning,
-                                            isLandscape: isLandscape,
-                                          ),
-                                        if (theyCountered)
-                                          _buildOverlayMessage(
-                                            context,
-                                            "COUNTERED!",
-                                            "OPPONENT GRANTED WINDOW",
-                                            Colors.red,
-                                            FontAwesomeIcons.skullCrossbones,
-                                            isLandscape: isLandscape,
-                                          ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            if (state.GameEnded)
-                              Positioned.fill(
-                                child: Container(
-                                  color: Colors.black54,
-                                  child: Center(
-                                    child: wrapWithModel(
-                                      model: _model.gameEndedDisplayComponentModel,
-                                      updateCallback: () => safeSetState(() {}),
-                                      child: GameEndedDisplayComponentWidget(),
-                                    ),
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Opacity(
+                                              opacity: (youCountered || theyCountered) ? 0.3 : 1.0,
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                children: [
+                                                  Flexible(
+                                                    child: _buildPlayedCard(
+                                                      context,
+                                                      state.YourCardPlayed,
+                                                      state.CardState,
+                                                      'You',
+                                                      isLandscape: isLandscape,
+                                                      screenHeight: battleHeight,
+                                                    ),
+                                                  ),
+                                                  Flexible(
+                                                    child: _buildPlayedCard(
+                                                      context,
+                                                      state.TheirCardPlayed,
+                                                      state.EnemyCardState,
+                                                      'Opponent',
+                                                      isLandscape: isLandscape,
+                                                      screenHeight: battleHeight,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            if (youCountered)
+                                              _buildOverlayMessage(
+                                                context,
+                                                "OPEN WINDOW!",
+                                                "FREE ATTACK GRANTED",
+                                                Colors.amber,
+                                                FontAwesomeIcons.boltLightning,
+                                                isLandscape: isLandscape,
+                                              ),
+                                            if (theyCountered)
+                                              _buildOverlayMessage(
+                                                context,
+                                                "COUNTERED!",
+                                                "OPPONENT GRANTED WINDOW",
+                                                Colors.red,
+                                                FontAwesomeIcons.skullCrossbones,
+                                                isLandscape: isLandscape,
+                                              ),
+                                          ],
+                                        ),
+                                      );
+                                    },
                                   ),
-                                ).animate().fadeIn(duration: 500.ms),
-                              ),
-                            Opacity(
-                              opacity: 0,
-                              child: FlutterFlowTimer(
-                                initialTime: _model.gameTimerInitialTimeMs,
-                                getDisplayTime: (value) => StopWatchTimer.getDisplayTime(value),
-                                controller: _model.gameTimerController,
-                                updateStateInterval: Duration(milliseconds: 100),
-                                onChanged: (value, displayTime, shouldUpdate) {},
-                                onEnded: () async {
-                                  if (state.GameEnded) return;
-                                  GameLogic.resetTurnState(state);
-                                  _model.gameTimerController.onResetTimer();
-                                  _prepareComputerMove();
-                                  safeSetState(() {});
-                                },
-                                textAlign: TextAlign.start,
-                                style: FlutterFlowTheme.of(context).headlineSmall,
-                              ),
-                            ),
-                          ],
+                                ),
+                                if (state.GameEnded)
+                                  Positioned.fill(
+                                    child: Container(
+                                      color: Colors.black54,
+                                      child: Center(
+                                        child: wrapWithModel(
+                                          model: _model.gameEndedDisplayComponentModel,
+                                          updateCallback: () => safeSetState(() {}),
+                                          child: GameEndedDisplayComponentWidget(),
+                                        ),
+                                      ),
+                                    ).animate().fadeIn(duration: 500.ms),
+                                  ),
+                                Opacity(
+                                  opacity: 0,
+                                  child: FlutterFlowTimer(
+                                    initialTime: _model.gameTimerInitialTimeMs,
+                                    getDisplayTime: (value) => StopWatchTimer.getDisplayTime(value),
+                                    controller: _model.gameTimerController,
+                                    updateStateInterval: Duration(milliseconds: 100),
+                                    onChanged: (value, displayTime, shouldUpdate) {},
+                                    onEnded: () async {
+                                      if (state.GameEnded) return;
+                                      GameLogic.resetTurnState(state);
+                                      _model.gameTimerController.onResetTimer();
+                                      _prepareComputerMove();
+                                      safeSetState(() {});
+                                    },
+                                    textAlign: TextAlign.start,
+                                    style: FlutterFlowTheme.of(context).headlineSmall,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -303,12 +310,15 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
                     ),
 
                     // Controls & Hand
-                    Container(
-                      height: isLandscape ? (screenHeight * 0.35).clamp(80, 140) : (screenHeight * 0.25).clamp(140, 180),
-                      color: FlutterFlowTheme.of(context).secondary,
-                      child: state.CounteredWindowActiveForThem 
-                        ? _buildCounteredOverlay(context, isLandscape)
-                        : _buildHandArea(context, state, isLandscape, screenHeight),
+                    Flexible(
+                      flex: isLandscape ? 0 : 2,
+                      child: Container(
+                        height: isLandscape ? (screenHeight * 0.35).clamp(80, 140) : null,
+                        color: FlutterFlowTheme.of(context).secondary,
+                        child: state.CounteredWindowActiveForThem 
+                          ? _buildCounteredOverlay(context, isLandscape)
+                          : _buildHandArea(context, state, isLandscape, screenHeight),
+                      ),
                     ),
                   ],
                 );
@@ -408,9 +418,10 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
   Widget _buildHandArea(BuildContext context, FFAppState state, bool isLandscape, double screenHeight) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(vertical: isLandscape ? 2.0 : 4.0),
+          padding: EdgeInsets.symmetric(vertical: isLandscape ? 2.0 : 2.0),
           child: FFButtonWidget(
             onPressed: () async {
               if (state.YourCardPlayed) return;
@@ -429,13 +440,13 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
             },
             text: 'REST (+4 Energy)',
             options: FFButtonOptions(
-              width: isLandscape ? 120 : 140,
-              height: isLandscape ? 28 : 36,
+              width: isLandscape ? 120 : 130,
+              height: isLandscape ? 28 : 28,
               color: Colors.amber,
               textStyle: GoogleFonts.raleway(
                 fontWeight: FontWeight.bold, 
                 color: Colors.black, 
-                fontSize: isLandscape ? 10 : 12
+                fontSize: isLandscape ? 10 : 10
               ),
               borderRadius: BorderRadius.circular(18),
             ),
@@ -450,12 +461,14 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
               itemCount: state.Hand.length,
               itemBuilder: (context, index) {
                 final card = state.Hand[index];
-                final cardHeight = isLandscape ? (screenHeight * 0.3).clamp(70.0, 110.0) : 120.0;
+                final cardHeight = isLandscape 
+                    ? (screenHeight * 0.3).clamp(70.0, 110.0) 
+                    : (screenHeight * 0.14).clamp(70.0, 110.0);
                 
                 return Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: 4.0, 
-                    vertical: isLandscape ? 2.0 : 4.0
+                    vertical: isLandscape ? 2.0 : 2.0
                   ),
                   child: Draggable<CardStruct>(
                     data: card,
@@ -514,7 +527,8 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
     }
   ) {
     return Container(
-      padding: EdgeInsets.all(isLandscape ? 4 : 12),
+      height: isLandscape ? null : 50,
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: isLandscape ? 4 : 2),
       color: isOpponent ? Colors.black26 : Colors.black12,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -523,7 +537,7 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
             children: [
               if (avatarUrl != null)
                 Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
+                  padding: const EdgeInsets.only(right: 6.0),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
@@ -533,7 +547,7 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
                           border: isHit ? Border.all(color: Colors.red, width: isLandscape ? 2 : 3) : null,
                         ),
                         child: CircleAvatar(
-                          radius: isLandscape ? 16 : 24,
+                          radius: isLandscape ? 16 : 18,
                           backgroundImage: NetworkImage(avatarUrl),
                           backgroundColor: Colors.white10,
                         ).animate(target: isHit ? 1 : 0)
@@ -541,21 +555,25 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
                          .tint(color: Colors.red.withValues(alpha: 0.7), duration: 200.ms),
                       ),
                       if (isHit)
-                        FaIcon(FontAwesomeIcons.burst, color: Colors.yellow, size: isLandscape ? 24 : 40)
+                        FaIcon(FontAwesomeIcons.burst, color: Colors.yellow, size: isLandscape ? 24 : 28)
                           .animate().scale(duration: 300.ms, curve: Curves.elasticOut)
                           .fadeOut(delay: 400.ms),
                     ],
                   ),
                 ),
               SizedBox(
-                width: MediaQuery.of(context).size.width * (isLandscape ? 0.2 : 0.3),
+                width: MediaQuery.of(context).size.width * (isLandscape ? 0.2 : 0.25),
                 child: AutoSizeText(
                   name,
                   maxLines: 1,
                   minFontSize: 8,
                   style: isLandscape 
                     ? FlutterFlowTheme.of(context).titleSmall 
-                    : FlutterFlowTheme.of(context).titleMedium,
+                    : FlutterFlowTheme.of(context).titleMedium.override(
+                        font: GoogleFonts.raleway(),
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ),
             ],
@@ -566,45 +584,44 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.favorite, color: Colors.red, size: isLandscape ? 24 : 32)
+                  Icon(Icons.favorite, color: Colors.red, size: isLandscape ? 24 : 26)
                     .animate(target: isHit ? 1 : 0)
                     .scale(begin: const Offset(1,1), end: const Offset(1.5, 1.5), duration: 300.ms, curve: Curves.bounceOut)
                     .then()
                     .scale(begin: const Offset(1.5,1.5), end: const Offset(1, 1), duration: 300.ms),
                   if (isHit)
-                    Text("-HP", style: GoogleFonts.robotoCondensed(color: Colors.white, fontWeight: FontWeight.w900, fontSize: isLandscape ? 8 : 10))
+                    Text("-HP", style: GoogleFonts.robotoCondensed(color: Colors.white, fontWeight: FontWeight.w900, fontSize: isLandscape ? 8 : 9))
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                 ],
               ),
               const SizedBox(width: 4),
-              Text('$life', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 22, fontWeight: FontWeight.bold)),
-              SizedBox(width: isLandscape ? 12 : 24),
+              Text('$life', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 18, fontWeight: FontWeight.bold)),
+              SizedBox(width: isLandscape ? 12 : 12),
               // Energy Icon
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.bolt, color: Colors.amber, size: isLandscape ? 24 : 32)
+                  Icon(Icons.bolt, color: Colors.amber, size: isLandscape ? 24 : 26)
                     .animate(target: isEnergyGained || isEnergyLost ? 1 : 0)
                     .scale(begin: const Offset(1,1), end: const Offset(1.5, 1.5), duration: 300.ms, curve: Curves.elasticOut)
                     .then()
                     .scale(begin: const Offset(1.5,1.5), end: const Offset(1, 1), duration: 300.ms),
                   if (isEnergyGained)
-                    Icon(Icons.add, color: Colors.green, size: isLandscape ? 14 : 20)
+                    Icon(Icons.add, color: Colors.green, size: isLandscape ? 14 : 16)
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                   if (isEnergyLost)
-                    Icon(Icons.remove, color: Colors.orange, size: isLandscape ? 14 : 20)
+                    Icon(Icons.remove, color: Colors.orange, size: isLandscape ? 14 : 16)
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                 ],
               ),
               const SizedBox(width: 4),
-              Text('$energy', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 22, fontWeight: FontWeight.bold)),
+              Text('$energy', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 18, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
       ),
     );
   }
-
   Widget _buildPlayedCard(
     BuildContext context, 
     bool played, 
@@ -613,27 +630,31 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
     {required bool isLandscape, required double screenHeight}
   ) {
     final shouldHide = label == 'Opponent' && played && !FFAppState().YourCardPlayed;
-    final cardHeight = isLandscape ? (screenHeight * 0.4).clamp(60.0, 120.0) : 125.0;
+    // Ultra-aggressive scaling for iPhone 16e portrait
+    final cardHeight = isLandscape 
+        ? (screenHeight * 0.32).clamp(50.0, 95.0) 
+        : (screenHeight * 0.15).clamp(80.0, 120.0);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(label, style: TextStyle(color: Colors.white70, fontSize: isLandscape ? 10 : 12)),
-        const SizedBox(height: 4),
+        SizedBox(height: isLandscape ? 1 : 4),
         Container(
           height: cardHeight,
           decoration: BoxDecoration(
             color: Colors.white10,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white24, width: 2),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white24, width: 1.5),
           ),
           child: AspectRatio(
             aspectRatio: 3/4,
             child: played 
               ? (shouldHide 
-                  ? const Center(child: Icon(Icons.help_center, size: 30, color: Colors.amber)) 
+                  ? Center(child: Icon(Icons.help_center, size: isLandscape ? 20 : 30, color: Colors.amber)) 
                   : CardValueComponentWidget(componentCard: card)) 
-              : Center(child: Icon(Icons.style, size: 30, color: Colors.white24)),
+              : Center(child: Icon(Icons.style, size: isLandscape ? 20 : 30, color: Colors.white24)),
           ),
         ),
       ],

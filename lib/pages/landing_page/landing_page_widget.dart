@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/services/audio_service.dart';
+import '/services/revenue_cat_service.dart';
 import '/index.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -11,6 +12,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'landing_page_model.dart';
 export 'landing_page_model.dart';
 
@@ -95,6 +97,23 @@ class _LandingPageWidgetState extends State<LandingPageWidget> {
                           FlutterFlowTheme.of(context).headlineMedium.fontStyle,
                     ),
               ),
+              if (Provider.of<RevenueCatService>(context).isPro)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: FlutterFlowTheme.of(context).primary, width: 2),
+                  ),
+                  child: Text(
+                    'PRO',
+                    style: GoogleFonts.robotoCondensed(
+                      color: FlutterFlowTheme.of(context).primary,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
             ],
           ),
           actions: [],
@@ -113,25 +132,50 @@ class _LandingPageWidgetState extends State<LandingPageWidget> {
                   Container(
                     width: 80.0,
                     height: 80.0,
-                    decoration: BoxDecoration(
-                      color: FlutterFlowTheme.of(context).primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Align(
+                    child: Stack(
                       alignment: AlignmentDirectional(0.0, 0.0),
-                      child: AuthUserStreamWidget(
-                        builder: (context) => ClipRRect(
-                          borderRadius: BorderRadius.circular(35.0),
-                          child: CachedNetworkImage(
-                            fadeInDuration: Duration(milliseconds: 0),
-                            fadeOutDuration: Duration(milliseconds: 0),
-                            imageUrl: currentUserPhoto,
-                            width: 70.0,
-                            height: 70.0,
-                            fit: BoxFit.cover,
+                      children: [
+                        Container(
+                          width: 80.0,
+                          height: 80.0,
+                          decoration: BoxDecoration(
+                            color: FlutterFlowTheme.of(context).primary,
+                            shape: BoxShape.circle,
+                            boxShadow: Provider.of<RevenueCatService>(context).isPro
+                                ? [BoxShadow(blurRadius: 12, color: FlutterFlowTheme.of(context).primary, spreadRadius: 2)]
+                                : [],
                           ),
                         ),
-                      ),
+                        AuthUserStreamWidget(
+                          builder: (context) => ClipRRect(
+                            borderRadius: BorderRadius.circular(35.0),
+                            child: CachedNetworkImage(
+                              fadeInDuration: Duration(milliseconds: 0),
+                              fadeOutDuration: Duration(milliseconds: 0),
+                              imageUrl: currentUserPhoto,
+                              width: 70.0,
+                              height: 70.0,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        if (Provider.of<RevenueCatService>(context).isPro)
+                          Align(
+                            alignment: AlignmentDirectional(1.0, 1.0),
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: Colors.black,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: FlutterFlowTheme.of(context).primary, width: 2),
+                              ),
+                              child: Center(
+                                child: Icon(Icons.star, color: FlutterFlowTheme.of(context).primary, size: 14),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   InkWell(

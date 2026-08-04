@@ -145,7 +145,7 @@ PODS:
     - FlutterMacOS
     - GoogleSignIn (~> 8.0)
     - GTMSessionFetcher (>= 3.4.0)
-  - GoogleDataTransport (10.1.0):
+  - GoogleDataTransport (10.1.1):
     - nanopb (~> 3.30910.0)
     - PromisesObjC (~> 2.4)
   - GoogleSignIn (8.0.0):
@@ -201,13 +201,21 @@ PODS:
   - PromisesObjC (2.4.1)
   - PromisesSwift (2.4.1):
     - PromisesObjC (= 2.4.1)
-  - purchases_flutter (10.4.1):
+  - purchases_flutter (10.7.0):
     - Flutter
-    - PurchasesHybridCommon (= 18.19.0)
-  - PurchasesHybridCommon (18.19.0):
-    - RevenueCat (= 5.80.2)
+    - PurchasesHybridCommon (= 18.28.0)
+  - purchases_ui_flutter (10.7.0):
+    - Flutter
+    - PurchasesHybridCommonUI (= 18.28.0)
+  - PurchasesHybridCommon (18.28.0):
+    - RevenueCat (= 5.83.0)
+  - PurchasesHybridCommonUI (18.28.0):
+    - PurchasesHybridCommon (= 18.28.0)
+    - RevenueCatUI (= 5.83.0)
   - RecaptchaInterop (101.0.0)
-  - RevenueCat (5.80.2)
+  - RevenueCat (5.83.0)
+  - RevenueCatUI (5.83.0):
+    - RevenueCat (= 5.83.0)
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -235,6 +243,7 @@ DEPENDENCIES:
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - purchases_flutter (from `.symlinks/plugins/purchases_flutter/ios`)
+  - purchases_ui_flutter (from `.symlinks/plugins/purchases_ui_flutter/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/darwin`)
@@ -278,8 +287,10 @@ SPEC REPOS:
     - PromisesObjC
     - PromisesSwift
     - PurchasesHybridCommon
+    - PurchasesHybridCommonUI
     - RecaptchaInterop
     - RevenueCat
+    - RevenueCatUI
 
 EXTERNAL SOURCES:
   audioplayers_darwin:
@@ -307,6 +318,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   purchases_flutter:
     :path: ".symlinks/plugins/purchases_flutter/ios"
+  purchases_ui_flutter:
+    :path: ".symlinks/plugins/purchases_ui_flutter/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   sign_in_with_apple:
@@ -358,7 +371,7 @@ SPEC CHECKSUMS:
   Google-Mobile-Ads-SDK: 7692126a35ed859f20635af281c50a2162be8bea
   google_mobile_ads: bab325fd4e31c9705cab0cb298e4f5a9bdb7370f
   google_sign_in_ios: b48bb9af78576358a168361173155596c845f0b9
-  GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
+  GoogleDataTransport: a24e58982ab3ba2f64d79613e027fe7f57e88539
   GoogleSignIn: ce8c89bb9b37fb624b92e7514cc67335d1e277e4
   GoogleUserMessagingPlatform: befe603da6501006420c206222acd449bba45a9c
   GoogleUtilities: 766ace00c6b10d8148408f329d10c4f051931850
@@ -369,10 +382,13 @@ SPEC CHECKSUMS:
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   PromisesSwift: 217dea0fd5d2ad65222a109c48698add13cc1c5b
-  purchases_flutter: 1bfc08dbcd8f55c6e79dfc055a76fe2081a2b729
-  PurchasesHybridCommon: 1eb67a6c8997233b35ed9b4eee8205dd8dd92890
+  purchases_flutter: 174b063d0e6f1f31424adedfcc3a7cda540fe026
+  purchases_ui_flutter: 32b8838ae5a130a85210844246a4cd8e52ee75ec
+  PurchasesHybridCommon: 8563d6a7d832332beb9b30478dbe56eeaa0dd425
+  PurchasesHybridCommonUI: 32f7edc00832b451d2fcbcf8ace064a5b8e936de
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
-  RevenueCat: b772273e51fa103a2ecc644439dd54a5dec199f3
+  RevenueCat: a83de0391a1061302699cb55eb1ff0662f5768b5
+  RevenueCatUI: 6f819d25fe953112c3722e33d0879bd590d78810
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
   sqflite: c35dad70033b8862124f8337cc994a809fcd9fa3
