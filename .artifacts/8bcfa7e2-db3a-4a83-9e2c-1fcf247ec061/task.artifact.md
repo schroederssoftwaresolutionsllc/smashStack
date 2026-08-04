@@ -1,0 +1,6 @@
+- [x] Make `CardValueComponentWidget` responsive using `AspectRatio` and `LayoutBuilder`
+- [x] Implement `OrientationBuilder` and `LayoutBuilder` in `BattleZonePlayCompWidget`
+- [x] Implement `OrientationBuilder` and `LayoutBuilder` in `BattleZonePlayHumWidget`
+- [x] Refactor `_buildPlayerHeader` for compact display on small heights
+- [x] Adjust Hand container height to be dynamic
+- [x] Verify layout logic for landscape mode

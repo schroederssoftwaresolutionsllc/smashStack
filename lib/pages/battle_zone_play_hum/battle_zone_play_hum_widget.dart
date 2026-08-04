@@ -57,6 +57,7 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     if (widget.matchRef == null) {
       return Scaffold(
@@ -99,8 +100,6 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
         if (match.hasPlayerACard() && match.hasPlayerBCard()) {
            WidgetsBinding.instance.addPostFrameCallback((_) async {
              await GameLogic.resolvePvPTurn(match, isPlayerA);
-             // After resolution, we might want to start a local timer to clear the UI
-             // But in PvP, the "next turn" is usually driven by the Stream
              safeSetState(() {});
              
              // Clear the resolution UI after a delay
@@ -113,7 +112,7 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
            });
         }
 
-        return _buildUI(context, match, isPlayerA);
+        return _buildUI(context, match, isPlayerA, isLandscape);
       },
     );
   }
@@ -168,7 +167,7 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
     }
   }
 
-  Widget _buildUI(BuildContext context, QueRecord match, bool isPlayerA) {
+  Widget _buildUI(BuildContext context, QueRecord match, bool isPlayerA, bool isLandscape) {
     final state = FFAppState();
 
     // Auto-Wait Logic for PvP
@@ -192,7 +191,7 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBar(
+        appBar: isLandscape ? null : AppBar(
           backgroundColor: FlutterFlowTheme.of(context).primary,
           automaticallyImplyLeading: false,
           leading: IconButton(
@@ -205,153 +204,130 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
           centerTitle: true,
         ),
         body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                // Opponent Info
-                _buildPlayerHeader(
-                  context, 
-                  isPlayerA ? 'Player B' : 'Player A', 
-                  FFAppState().ThierLife, 
-                  FFAppState().TheirEnergy,
-                  true,
-                  avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=${isPlayerA ? match.playerB : match.playerA}',
-                  isHit: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && !FFAppState().TheyAvoided && FFAppState().CardState.damage > 0,
-                  isEnergyGained: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && FFAppState().EnemyCardState.energy < 0,
-                  isEnergyLost: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && FFAppState().EnemyCardState.energy > 0,
-                ),
-                
-                Expanded(
-                  child: Center(
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Opacity(
-                              opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
-                              child: _buildPlayedCard(context, FFAppState().YourCardPlayed, FFAppState().CardState, 'You'),
-                            ),
-                            Opacity(
-                              opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
-                              child: _buildPlayedCard(context, FFAppState().TheirCardPlayed, FFAppState().EnemyCardState, 'Opponent'),
-                            ),
-                          ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final screenHeight = constraints.maxHeight;
+              
+              return Stack(
+                children: [
+                  Column(
+                    children: [
+                      // Opponent Info
+                      _buildPlayerHeader(
+                        context, 
+                        isPlayerA ? 'Player B' : 'Player A', 
+                        FFAppState().ThierLife, 
+                        FFAppState().TheirEnergy,
+                        true,
+                        isLandscape: isLandscape,
+                        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=${isPlayerA ? match.playerB : match.playerA}',
+                        isHit: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && !FFAppState().TheyAvoided && FFAppState().CardState.damage > 0,
+                        isEnergyGained: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && FFAppState().EnemyCardState.energy < 0,
+                        isEnergyLost: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && FFAppState().EnemyCardState.energy > 0,
+                      ),
+                      
+                      Expanded(
+                        child: Center(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Opacity(
+                                    opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
+                                    child: _buildPlayedCard(context, FFAppState().YourCardPlayed, FFAppState().CardState, 'You', isLandscape: isLandscape, screenHeight: screenHeight),
+                                  ),
+                                  Opacity(
+                                    opacity: (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && (FFAppState().EnemyCardState.name.toLowerCase() == 'wait' || FFAppState().CardState.name.toLowerCase() == 'wait')) ? 0.3 : 1.0,
+                                    child: _buildPlayedCard(context, FFAppState().TheirCardPlayed, FFAppState().EnemyCardState, 'Opponent', isLandscape: isLandscape, screenHeight: screenHeight),
+                                  ),
+                                ],
+                              ),
+                              if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().EnemyCardState.name.toLowerCase() == 'wait')
+                                _buildOverlayMessage(context, "OPEN WINDOW!", "FREE ATTACK GRANTED", Colors.amber, FontAwesomeIcons.boltLightning, isLandscape: isLandscape),
+                              if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().CardState.name.toLowerCase() == 'wait')
+                                _buildOverlayMessage(context, "COUNTERED!", "OPPONENT GRANTED WINDOW", Colors.red, FontAwesomeIcons.skullCrossbones, isLandscape: isLandscape),
+                            ],
+                          ),
                         ),
-                        if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().EnemyCardState.name.toLowerCase() == 'wait')
-                          Container(
-                            padding: const EdgeInsets.all(32),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(40),
-                              border: Border.all(color: Colors.amber, width: 4),
-                              boxShadow: [
-                                BoxShadow(blurRadius: 30, color: Colors.amber.withValues(alpha: 0.4))
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const FaIcon(FontAwesomeIcons.boltLightning, color: Colors.amber, size: 80)
-                                  .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-                                const SizedBox(height: 16),
-                                Text(
-                                  "OPEN WINDOW!",
-                                  style: GoogleFonts.raleway(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.amber,
-                                    letterSpacing: 4,
-                                  ),
-                                ),
-                                Text(
-                                  "FREE ATTACK GRANTED",
-                                  style: GoogleFonts.raleway(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).shake(hz: 8, duration: 600.ms),
-                        if (FFAppState().YourCardPlayed && FFAppState().TheirCardPlayed && FFAppState().CardState.name.toLowerCase() == 'wait')
-                          Container(
-                            padding: const EdgeInsets.all(32),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(40),
-                              border: Border.all(color: Colors.red, width: 4),
-                              boxShadow: [
-                                BoxShadow(blurRadius: 30, color: Colors.red.withValues(alpha: 0.4))
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const FaIcon(FontAwesomeIcons.skullCrossbones, color: Colors.red, size: 80)
-                                  .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-                                const SizedBox(height: 16),
-                                Text(
-                                  "COUNTERED!",
-                                  style: GoogleFonts.raleway(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.red,
-                                    letterSpacing: 4,
-                                  ),
-                                ),
-                                Text(
-                                  "OPPONENT GRANTED WINDOW",
-                                  style: GoogleFonts.raleway(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).shake(hz: 8, duration: 600.ms),
-                      ],
+                      ),
+
+                      // Your Info
+                      AuthUserStreamWidget(
+                        builder: (context) => _buildPlayerHeader(
+                          context, 
+                          'You', 
+                          FFAppState().YourLife, 
+                          FFAppState().YourEnergy,
+                          false,
+                          isLandscape: isLandscape,
+                          avatarUrl: currentUserPhoto,
+                          isHit: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && !FFAppState().YouAvoided && FFAppState().EnemyCardState.damage > 0,
+                          isEnergyGained: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && (FFAppState().CardState.energy < 0 || (FFAppState().YouAvoided && !FFAppState().CardState.name.toLowerCase().contains('counter'))),
+                          isEnergyLost: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && FFAppState().CardState.energy > 0,
+                        ),
+                      ),
+
+                      // Your Hand
+                      _buildHand(context, match, isPlayerA, isLandscape, screenHeight),
+                    ],
+                  ),
+                  if (FFAppState().GameEnded)
+                    Center(
+                      child: wrapWithModel(
+                        model: _model.gameEndedDisplayComponentModel,
+                        updateCallback: () => safeSetState(() {}),
+                        child: GameEndedDisplayComponentWidget(),
+                      ),
                     ),
-                  ),
-                ),
-
-                // Your Info
-                AuthUserStreamWidget(
-                  builder: (context) => _buildPlayerHeader(
-                    context, 
-                    'You', 
-                    FFAppState().YourLife, 
-                    FFAppState().YourEnergy,
-                    false,
-                    avatarUrl: currentUserPhoto,
-                    isHit: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && !FFAppState().YouAvoided && FFAppState().EnemyCardState.damage > 0,
-                    isEnergyGained: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && (FFAppState().CardState.energy < 0 || (FFAppState().YouAvoided && !FFAppState().CardState.name.toLowerCase().contains('counter'))),
-                    isEnergyLost: FFAppState().TheirCardPlayed && FFAppState().YourCardPlayed && FFAppState().CardState.energy > 0,
-                  ),
-                ),
-
-                // Your Hand
-                _buildHand(context, match, isPlayerA),
-              ],
-            ),
-            if (FFAppState().GameEnded)
-              Center(
-                child: wrapWithModel(
-                  model: _model.gameEndedDisplayComponentModel,
-                  updateCallback: () => safeSetState(() {}),
-                  child: GameEndedDisplayComponentWidget(),
-                ),
-              ),
-          ],
+                ],
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildOverlayMessage(BuildContext context, String title, String subtitle, Color color, IconData icon, {required bool isLandscape}) {
+    return Container(
+      padding: EdgeInsets.all(isLandscape ? 16 : 32),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(isLandscape ? 20 : 40),
+        border: Border.all(color: color, width: isLandscape ? 2 : 4),
+        boxShadow: [
+          BoxShadow(blurRadius: 30, color: color.withValues(alpha: 0.4))
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FaIcon(icon, color: color, size: isLandscape ? 40 : 80)
+            .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+          SizedBox(height: isLandscape ? 8 : 16),
+          Text(
+            title,
+            style: GoogleFonts.raleway(
+              fontSize: isLandscape ? 24 : 36,
+              fontWeight: FontWeight.w900,
+              color: color,
+              letterSpacing: isLandscape ? 2 : 4,
+            ),
+          ),
+          Text(
+            subtitle,
+            style: GoogleFonts.raleway(
+              fontSize: isLandscape ? 12 : 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).shake(hz: 8, duration: 600.ms);
+  }
 
   Widget _buildPlayerHeader(
     BuildContext context, 
@@ -359,10 +335,10 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
     int life, 
     int energy, 
     bool isOpponent, 
-    {String? avatarUrl, bool isHit = false, bool isEnergyGained = false, bool isEnergyLost = false}
+    {String? avatarUrl, bool isHit = false, bool isEnergyGained = false, bool isEnergyLost = false, required bool isLandscape}
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isLandscape ? 4 : 12),
       color: isOpponent ? Colors.black26 : Colors.black12,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -378,10 +354,10 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                       Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: isHit ? Border.all(color: Colors.red, width: 3) : null,
+                          border: isHit ? Border.all(color: Colors.red, width: isLandscape ? 2 : 3) : null,
                         ),
                         child: CircleAvatar(
-                          radius: 24,
+                          radius: isLandscape ? 16 : 24,
                           backgroundImage: NetworkImage(avatarUrl),
                           backgroundColor: Colors.white10,
                         ).animate(target: isHit ? 1 : 0)
@@ -389,13 +365,13 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                          .tint(color: Colors.red.withValues(alpha: 0.7), duration: 200.ms),
                       ),
                       if (isHit)
-                        const FaIcon(FontAwesomeIcons.burst, color: Colors.yellow, size: 40)
+                        FaIcon(FontAwesomeIcons.burst, color: Colors.yellow, size: isLandscape ? 24 : 40)
                           .animate().scale(duration: 300.ms, curve: Curves.elasticOut)
                           .fadeOut(delay: 400.ms),
                     ],
                   ),
                 ),
-              Text(name, style: FlutterFlowTheme.of(context).titleMedium),
+              Text(name, style: isLandscape ? FlutterFlowTheme.of(context).titleSmall : FlutterFlowTheme.of(context).titleMedium),
             ],
           ),
           Row(
@@ -404,38 +380,38 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.favorite, color: Colors.red, size: 32)
+                  Icon(Icons.favorite, color: Colors.red, size: isLandscape ? 24 : 32)
                     .animate(target: isHit ? 1 : 0)
                     .scale(begin: const Offset(1,1), end: const Offset(1.5, 1.5), duration: 300.ms, curve: Curves.bounceOut)
                     .then()
                     .scale(begin: const Offset(1.5,1.5), end: const Offset(1, 1), duration: 300.ms),
                   if (isHit)
-                    Text("-HP", style: GoogleFonts.robotoCondensed(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10))
+                    Text("-HP", style: GoogleFonts.robotoCondensed(color: Colors.white, fontWeight: FontWeight.w900, fontSize: isLandscape ? 8 : 10))
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                 ],
               ),
-              const SizedBox(width: 8),
-              Text('$life', style: GoogleFonts.robotoCondensed(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 24),
+              const SizedBox(width: 4),
+              Text('$life', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 22, fontWeight: FontWeight.bold)),
+              SizedBox(width: isLandscape ? 12 : 24),
               // Energy Icon
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.bolt, color: Colors.amber, size: 32)
+                  Icon(Icons.bolt, color: Colors.amber, size: isLandscape ? 24 : 32)
                     .animate(target: isEnergyGained || isEnergyLost ? 1 : 0)
                     .scale(begin: const Offset(1,1), end: const Offset(1.5, 1.5), duration: 300.ms, curve: Curves.elasticOut)
                     .then()
                     .scale(begin: const Offset(1.5,1.5), end: const Offset(1, 1), duration: 300.ms),
                   if (isEnergyGained)
-                    const Icon(Icons.add, color: Colors.green, size: 20)
+                    Icon(Icons.add, color: Colors.green, size: isLandscape ? 14 : 20)
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                   if (isEnergyLost)
-                    const Icon(Icons.remove, color: Colors.orange, size: 20)
+                    Icon(Icons.remove, color: Colors.orange, size: isLandscape ? 14 : 20)
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                 ],
               ),
-              const SizedBox(width: 8),
-              Text('$energy', style: GoogleFonts.robotoCondensed(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 4),
+              Text('$energy', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 22, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -443,31 +419,36 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
     );
   }
 
-  Widget _buildPlayedCard(BuildContext context, bool played, CardStruct card, String label) {
+  Widget _buildPlayedCard(BuildContext context, bool played, CardStruct card, String label, {required bool isLandscape, required double screenHeight}) {
+    final cardHeight = isLandscape ? (screenHeight * 0.4).clamp(60.0, 120.0) : 140.0;
+    
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label, style: FlutterFlowTheme.of(context).bodySmall),
-        SizedBox(height: 8),
+        Text(label, style: isLandscape ? FlutterFlowTheme.of(context).bodySmall.override(font: GoogleFonts.raleway(), fontSize: 10) : FlutterFlowTheme.of(context).bodySmall),
+        SizedBox(height: 4),
         Container(
-          width: 100,
-          height: 140,
+          height: cardHeight,
           decoration: BoxDecoration(
             color: FlutterFlowTheme.of(context).secondaryBackground,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: FlutterFlowTheme.of(context).primary, width: 2),
           ),
-          child: played ? CardValueComponentWidget(componentCard: card) : Icon(Icons.help_outline, size: 48, color: Colors.grey),
+          child: AspectRatio(
+            aspectRatio: 3/4,
+            child: played ? CardValueComponentWidget(componentCard: card) : Icon(Icons.help_outline, size: isLandscape ? 24 : 48, color: Colors.grey),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildHand(BuildContext context, QueRecord match, bool isPlayerA) {
+  Widget _buildHand(BuildContext context, QueRecord match, bool isPlayerA, bool isLandscape, double screenHeight) {
     final state = FFAppState();
+    final handHeight = isLandscape ? (screenHeight * 0.3).clamp(80.0, 120.0) : 160.0;
     
     return Container(
-      height: 160,
+      height: handHeight,
       color: FlutterFlowTheme.of(context).secondary,
       child: state.CounteredWindowActiveForThem 
         ? Column(
@@ -478,29 +459,29 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                 style: GoogleFonts.raleway(
                   color: Colors.redAccent,
                   fontWeight: FontWeight.w900,
-                  fontSize: 18,
+                  fontSize: isLandscape ? 14 : 18,
                 ),
               ),
-              const SizedBox(height: 8),
+              if (!isLandscape) const SizedBox(height: 8),
               Text(
                 "AUTO-WAITING...",
                 style: GoogleFonts.raleway(
                   color: Colors.white70,
-                  fontSize: 12,
+                  fontSize: isLandscape ? 10 : 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: isLandscape ? 4 : 12),
               Container(
-                width: 50,
-                height: 50,
+                width: isLandscape ? 30 : 50,
+                height: isLandscape ? 30 : 50,
                 decoration: BoxDecoration(
                   color: Colors.white10,
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(color: Colors.redAccent, width: 2),
                 ),
-                child: const Center(
-                  child: Icon(Icons.hourglass_empty, color: Colors.redAccent, size: 24),
+                child: Center(
+                  child: Icon(Icons.hourglass_empty, color: Colors.redAccent, size: isLandscape ? 16 : 24),
                 ),
               ).animate(onPlay: (controller) => controller.repeat())
                .rotate(duration: 2.seconds),
@@ -514,8 +495,10 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
               itemCount: FFAppState().Hand.length,
               itemBuilder: (context, index) {
                 final card = FFAppState().Hand[index];
+                final cardHeight = isLandscape ? (screenHeight * 0.25).clamp(70.0, 110.0) : 120.0;
+
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                  padding: EdgeInsets.symmetric(horizontal: 4.0, vertical: isLandscape ? 2.0 : 8.0),
                   child: Draggable<CardStruct>(
                     data: card,
                     onDragStarted: () {
@@ -524,14 +507,22 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                     feedback: Material(
                       type: MaterialType.transparency,
                       child: SizedBox(
-                        width: 80,
-                        height: 110,
-                        child: CardValueComponentWidget(componentCard: card),
+                        height: cardHeight,
+                        child: AspectRatio(
+                          aspectRatio: 3/4,
+                          child: CardValueComponentWidget(componentCard: card),
+                        ),
                       ),
                     ),
                     childWhenDragging: Opacity(
                       opacity: 0.3,
-                      child: CardValueComponentWidget(componentCard: card),
+                      child: SizedBox(
+                        height: cardHeight,
+                        child: AspectRatio(
+                          aspectRatio: 3/4,
+                          child: CardValueComponentWidget(componentCard: card),
+                        ),
+                      ),
                     ),
                     child: InkWell(
                       onTap: () async {
@@ -560,7 +551,10 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
                       },
                       child: Opacity(
                         opacity: FFAppState().YourCardPlayed ? 0.5 : 1.0,
-                        child: CardValueComponentWidget(componentCard: card),
+                        child: AspectRatio(
+                          aspectRatio: 3/4,
+                          child: CardValueComponentWidget(componentCard: card),
+                        ),
                       ),
                     ),
                   ),

@@ -79,6 +79,7 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
     final state = FFAppState();
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     // Auto-Wait Logic
     if (state.CounteredWindowActiveForThem && !state.YourCardPlayed && !state.GameEnded) {
@@ -105,7 +106,7 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
         child: Scaffold(
           key: scaffoldKey,
           backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-          appBar: AppBar(
+          appBar: isLandscape ? null : AppBar(
             backgroundColor: FlutterFlowTheme.of(context).primary,
             automaticallyImplyLeading: false,
             leading: IconButton(
@@ -119,360 +120,384 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
             elevation: 2.0,
           ),
           body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Column(
-                children: [
-                  // Opponent Stats
-                  _buildPlayerHeader(
-                    context, 
-                    state.TheirName, 
-                    state.ThierLife, 
-                    state.TheirEnergy, 
-                    true,
-                    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=${state.TheirName}',
-                    isHit: state.TheirCardPlayed && state.YourCardPlayed && !state.TheyAvoided && state.CardState.damage > 0,
-                    isEnergyGained: state.TheirCardPlayed && state.YourCardPlayed && state.EnemyCardState.energy < 0,
-                    isEnergyLost: state.TheirCardPlayed && state.YourCardPlayed && (state.EnemyCardState.energy > 0 || (state.YouAvoided && state.CardState.name.toLowerCase().contains('counter'))),
-                  ),
-                  
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [FlutterFlowTheme.of(context).primary, FlutterFlowTheme.of(context).secondary],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Center(
-                            child: DragTarget<CardStruct>(
-                              onAcceptWithDetails: (details) async {
-                                final card = details.data;
-                                if (state.YourEnergy < card.energy) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Not enough energy!')),
-                                  );
-                                  return;
-                                }
-                                
-                                state.CardState = card;
-                                state.YourCardPlayed = true;
-                                safeSetState(() {});
-
-                                final lib = state.Library;
-                                if (lib.isNotEmpty) {
-                                  final newCard = lib[random_data.randomInteger(0, lib.length - 1)];
-                                  final hand = state.Hand;
-                                  final index = hand.indexOf(card);
-                                  if (index != -1) hand[index] = newCard;
-                                }
-
-                                await Future.delayed(const Duration(milliseconds: 1000));
-                                
-                                await GameLogic.processTurn(context, isRevealing: true);
-                                _model.gameTimerController.onStartTimer();
-                                safeSetState(() {});
-                              },
-                              builder: (context, candidateData, rejectedData) {
-                                final isHovering = candidateData.isNotEmpty;
-                                // Immediate feedback for the current turn resolution
-                                // Only show if BOTH have played, otherwise it's "stuck" from last turn
-                                final youCountered = state.YourCardPlayed && state.TheirCardPlayed && state.EnemyCardState.name.toLowerCase() == 'wait';
-                                final theyCountered = state.YourCardPlayed && state.TheirCardPlayed && state.CardState.name.toLowerCase() == 'wait';
-
-                                return Container(
-                                  width: constraints.maxWidth * 0.95,
-                                  margin: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: isHovering ? Colors.white10 : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: isHovering ? Border.all(color: Colors.white24, width: 2) : null,
-                                  ),
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Opacity(
-                                        opacity: (youCountered || theyCountered) ? 0.3 : 1.0,
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            Flexible(
-                                              child: _buildPlayedCard(
-                                                context,
-                                                state.YourCardPlayed,
-                                                state.CardState,
-                                                'You',
-                                              ),
-                                            ),
-                                            Flexible(
-                                              child: _buildPlayedCard(
-                                                context,
-                                                state.TheirCardPlayed,
-                                                state.EnemyCardState,
-                                                'Opponent',
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (youCountered)
-                                        Container(
-                                          padding: const EdgeInsets.all(32),
-                                          decoration: BoxDecoration(
-                                            color: Colors.amber.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(40),
-                                            border: Border.all(color: Colors.amber, width: 4),
-                                            boxShadow: [
-                                              BoxShadow(blurRadius: 30, color: Colors.amber.withValues(alpha: 0.4))
-                                            ],
-                                          ),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const FaIcon(FontAwesomeIcons.boltLightning, color: Colors.amber, size: 80)
-                                                .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                "OPEN WINDOW!",
-                                                style: GoogleFonts.raleway(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Colors.amber,
-                                                  letterSpacing: 4,
-                                                ),
-                                              ),
-                                              Text(
-                                                "FREE ATTACK GRANTED",
-                                                style: GoogleFonts.raleway(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).shake(hz: 8, duration: 600.ms),
-                                      if (theyCountered)
-                                        Container(
-                                          padding: const EdgeInsets.all(32),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(40),
-                                            border: Border.all(color: Colors.red, width: 4),
-                                            boxShadow: [
-                                              BoxShadow(blurRadius: 30, color: Colors.red.withValues(alpha: 0.4))
-                                            ],
-                                          ),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const FaIcon(FontAwesomeIcons.skullCrossbones, color: Colors.red, size: 80)
-                                                .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                "COUNTERED!",
-                                                style: GoogleFonts.raleway(
-                                                  fontSize: 36,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Colors.red,
-                                                  letterSpacing: 4,
-                                                ),
-                                              ),
-                                              Text(
-                                                "OPPONENT GRANTED WINDOW",
-                                                style: GoogleFonts.raleway(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).shake(hz: 8, duration: 600.ms),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          if (state.GameEnded)
-                            Positioned.fill(
-                              child: Container(
-                                color: Colors.black54,
-                                child: Center(
-                                  child: wrapWithModel(
-                                    model: _model.gameEndedDisplayComponentModel,
-                                    updateCallback: () => safeSetState(() {}),
-                                    child: GameEndedDisplayComponentWidget(),
-                                  ),
-                                ),
-                              ).animate().fadeIn(duration: 500.ms),
-                            ),
-                          Opacity(
-                            opacity: 0,
-                            child: FlutterFlowTimer(
-                              initialTime: _model.gameTimerInitialTimeMs,
-                              getDisplayTime: (value) => StopWatchTimer.getDisplayTime(value),
-                              controller: _model.gameTimerController,
-                              updateStateInterval: Duration(milliseconds: 100),
-                              onChanged: (value, displayTime, shouldUpdate) {},
-                              onEnded: () async {
-                                if (state.GameEnded) return;
-                                GameLogic.resetTurnState(state);
-                                _model.gameTimerController.onResetTimer();
-                                _prepareComputerMove();
-                                safeSetState(() {});
-                              },
-                              textAlign: TextAlign.start,
-                              style: FlutterFlowTheme.of(context).headlineSmall,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Your Stats
-                  AuthUserStreamWidget(
-                    builder: (context) => _buildPlayerHeader(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final screenHeight = constraints.maxHeight;
+                
+                return Column(
+                  children: [
+                    // Opponent Stats
+                    _buildPlayerHeader(
                       context, 
-                      currentUserDisplayName, 
-                      state.YourLife, 
-                      state.YourEnergy, 
-                      false,
-                      avatarUrl: currentUserPhoto,
-                      isHit: state.TheirCardPlayed && state.YourCardPlayed && !state.YouAvoided && state.EnemyCardState.damage > 0,
-                      isEnergyGained: state.TheirCardPlayed && state.YourCardPlayed && (state.CardState.energy < 0 || (state.YouAvoided && !state.CardState.name.toLowerCase().contains('counter'))),
-                      isEnergyLost: state.TheirCardPlayed && state.YourCardPlayed && state.CardState.energy > 0,
+                      state.TheirName, 
+                      state.ThierLife, 
+                      state.TheirEnergy, 
+                      true,
+                      isLandscape: isLandscape,
+                      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/png?seed=${state.TheirName}',
+                      isHit: state.TheirCardPlayed && state.YourCardPlayed && !state.TheyAvoided && state.CardState.damage > 0,
+                      isEnergyGained: state.TheirCardPlayed && state.YourCardPlayed && state.EnemyCardState.energy < 0,
+                      isEnergyLost: state.TheirCardPlayed && state.YourCardPlayed && (state.EnemyCardState.energy > 0 || (state.YouAvoided && state.CardState.name.toLowerCase().contains('counter'))),
                     ),
-                  ),
-
-                  // Controls & Hand
-                  Container(
-                    height: 180,
-                    color: FlutterFlowTheme.of(context).secondary,
-                    child: state.CounteredWindowActiveForThem 
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                    
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [FlutterFlowTheme.of(context).primary, FlutterFlowTheme.of(context).secondary],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                        child: Stack(
                           children: [
-                            Text(
-                              "YOU ARE COUNTERED!",
-                              style: GoogleFonts.raleway(
-                                color: Colors.redAccent,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "AUTO-WAITING...",
-                              style: GoogleFonts.raleway(
-                                color: Colors.white70,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: Colors.white10,
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(color: Colors.redAccent, width: 2),
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.hourglass_empty, color: Colors.redAccent, size: 30),
-                              ),
-                            ).animate(onPlay: (controller) => controller.repeat())
-                             .rotate(duration: 2.seconds),
-                          ],
-                        )
-                      : Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
-                              child: FFButtonWidget(
-                                onPressed: () async {
-                                  if (state.YourCardPlayed) return;
-                                   state.CardState = CardStruct(
-                                    energy: -4,
-                                    damage: 0,
-                                    name: 'Rest',
-                                  );
+                            Center(
+                              child: DragTarget<CardStruct>(
+                                onAcceptWithDetails: (details) async {
+                                  final card = details.data;
+                                  if (state.YourEnergy < card.energy) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Not enough energy!')),
+                                    );
+                                    return;
+                                  }
+                                  
+                                  state.CardState = card;
                                   state.YourCardPlayed = true;
                                   safeSetState(() {});
 
+                                  final lib = state.Library;
+                                  if (lib.isNotEmpty) {
+                                    final newCard = lib[random_data.randomInteger(0, lib.length - 1)];
+                                    final hand = state.Hand;
+                                    final index = hand.indexOf(card);
+                                    if (index != -1) hand[index] = newCard;
+                                  }
+
                                   await Future.delayed(const Duration(milliseconds: 1000));
+                                  
                                   await GameLogic.processTurn(context, isRevealing: true);
                                   _model.gameTimerController.onStartTimer();
                                   safeSetState(() {});
                                 },
-                                text: 'REST (+4 Energy)',
-                                options: FFButtonOptions(
-                                  width: 140,
-                                  height: 36,
-                                  color: Colors.amber,
-                                  textStyle: GoogleFonts.raleway(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 12),
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const BouncingScrollPhysics(),
-                                  itemCount: state.Hand.length,
-                                  itemBuilder: (context, index) {
-                                    final card = state.Hand[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
-                                      child: Draggable<CardStruct>(
-                                        data: card,
-                                        onDragStarted: () {
-                                          if (state.YourCardPlayed) return;
-                                        },
-                                        feedback: Material(
-                                          type: MaterialType.transparency,
-                                          child: SizedBox(
-                                            width: 70,
-                                            height: 100,
-                                            child: CardValueComponentWidget(componentCard: card),
+                                builder: (context, candidateData, rejectedData) {
+                                  final isHovering = candidateData.isNotEmpty;
+                                  final youCountered = state.YourCardPlayed && state.TheirCardPlayed && state.EnemyCardState.name.toLowerCase() == 'wait';
+                                  final theyCountered = state.YourCardPlayed && state.TheirCardPlayed && state.CardState.name.toLowerCase() == 'wait';
+
+                                  return Container(
+                                    width: constraints.maxWidth * 0.95,
+                                    margin: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: isHovering ? Colors.white10 : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: isHovering ? Border.all(color: Colors.white24, width: 2) : null,
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        Opacity(
+                                          opacity: (youCountered || theyCountered) ? 0.3 : 1.0,
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              Flexible(
+                                                child: _buildPlayedCard(
+                                                  context,
+                                                  state.YourCardPlayed,
+                                                  state.CardState,
+                                                  'You',
+                                                  isLandscape: isLandscape,
+                                                  screenHeight: screenHeight,
+                                                ),
+                                              ),
+                                              Flexible(
+                                                child: _buildPlayedCard(
+                                                  context,
+                                                  state.TheirCardPlayed,
+                                                  state.EnemyCardState,
+                                                  'Opponent',
+                                                  isLandscape: isLandscape,
+                                                  screenHeight: screenHeight,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        childWhenDragging: Opacity(
-                                          opacity: 0.3,
-                                          child: CardValueComponentWidget(componentCard: card),
-                                        ),
-                                        child: Opacity(
-                                          opacity: state.YourCardPlayed ? 0.5 : 1.0,
-                                          child: CardValueComponentWidget(componentCard: card),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
+                                        if (youCountered)
+                                          _buildOverlayMessage(
+                                            context,
+                                            "OPEN WINDOW!",
+                                            "FREE ATTACK GRANTED",
+                                            Colors.amber,
+                                            FontAwesomeIcons.boltLightning,
+                                            isLandscape: isLandscape,
+                                          ),
+                                        if (theyCountered)
+                                          _buildOverlayMessage(
+                                            context,
+                                            "COUNTERED!",
+                                            "OPPONENT GRANTED WINDOW",
+                                            Colors.red,
+                                            FontAwesomeIcons.skullCrossbones,
+                                            isLandscape: isLandscape,
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            if (state.GameEnded)
+                              Positioned.fill(
+                                child: Container(
+                                  color: Colors.black54,
+                                  child: Center(
+                                    child: wrapWithModel(
+                                      model: _model.gameEndedDisplayComponentModel,
+                                      updateCallback: () => safeSetState(() {}),
+                                      child: GameEndedDisplayComponentWidget(),
+                                    ),
+                                  ),
+                                ).animate().fadeIn(duration: 500.ms),
+                              ),
+                            Opacity(
+                              opacity: 0,
+                              child: FlutterFlowTimer(
+                                initialTime: _model.gameTimerInitialTimeMs,
+                                getDisplayTime: (value) => StopWatchTimer.getDisplayTime(value),
+                                controller: _model.gameTimerController,
+                                updateStateInterval: Duration(milliseconds: 100),
+                                onChanged: (value, displayTime, shouldUpdate) {},
+                                onEnded: () async {
+                                  if (state.GameEnded) return;
+                                  GameLogic.resetTurnState(state);
+                                  _model.gameTimerController.onResetTimer();
+                                  _prepareComputerMove();
+                                  safeSetState(() {});
+                                },
+                                textAlign: TextAlign.start,
+                                style: FlutterFlowTheme.of(context).headlineSmall,
                               ),
                             ),
                           ],
                         ),
-                  ),
-                ],
-              );
-            },
+                      ),
+                    ),
+
+                    // Your Stats
+                    AuthUserStreamWidget(
+                      builder: (context) => _buildPlayerHeader(
+                        context, 
+                        currentUserDisplayName, 
+                        state.YourLife, 
+                        state.YourEnergy, 
+                        false,
+                        isLandscape: isLandscape,
+                        avatarUrl: currentUserPhoto,
+                        isHit: state.TheirCardPlayed && state.YourCardPlayed && !state.YouAvoided && state.EnemyCardState.damage > 0,
+                        isEnergyGained: state.TheirCardPlayed && state.YourCardPlayed && (state.CardState.energy < 0 || (state.YouAvoided && !state.CardState.name.toLowerCase().contains('counter'))),
+                        isEnergyLost: state.TheirCardPlayed && state.YourCardPlayed && state.CardState.energy > 0,
+                      ),
+                    ),
+
+                    // Controls & Hand
+                    Container(
+                      height: isLandscape ? (screenHeight * 0.35).clamp(80, 140) : (screenHeight * 0.25).clamp(140, 180),
+                      color: FlutterFlowTheme.of(context).secondary,
+                      child: state.CounteredWindowActiveForThem 
+                        ? _buildCounteredOverlay(context, isLandscape)
+                        : _buildHandArea(context, state, isLandscape, screenHeight),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
+
+  Widget _buildOverlayMessage(
+    BuildContext context, 
+    String title, 
+    String subtitle, 
+    Color color, 
+    IconData icon, 
+    {required bool isLandscape}
+  ) {
+    return Container(
+      padding: EdgeInsets.all(isLandscape ? 16 : 32),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(isLandscape ? 20 : 40),
+        border: Border.all(color: color, width: isLandscape ? 2 : 4),
+        boxShadow: [
+          BoxShadow(blurRadius: 30, color: color.withValues(alpha: 0.4))
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FaIcon(icon, color: color, size: isLandscape ? 40 : 80)
+            .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
+          SizedBox(height: isLandscape ? 8 : 16),
+          Text(
+            title,
+            style: GoogleFonts.raleway(
+              fontSize: isLandscape ? 24 : 36,
+              fontWeight: FontWeight.w900,
+              color: color,
+              letterSpacing: isLandscape ? 2 : 4,
+            ),
+          ),
+          Text(
+            subtitle,
+            style: GoogleFonts.raleway(
+              fontSize: isLandscape ? 12 : 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).shake(hz: 8, duration: 600.ms);
+  }
+
+  Widget _buildCounteredOverlay(BuildContext context, bool isLandscape) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "YOU ARE COUNTERED!",
+          style: GoogleFonts.raleway(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.w900,
+            fontSize: isLandscape ? 14 : 18,
+          ),
+        ),
+        if (!isLandscape) const SizedBox(height: 8),
+        Text(
+          "AUTO-WAITING...",
+          style: GoogleFonts.raleway(
+            color: Colors.white70,
+            fontSize: isLandscape ? 10 : 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: isLandscape ? 4 : 12),
+        Container(
+          width: isLandscape ? 40 : 60,
+          height: isLandscape ? 40 : 60,
+          decoration: BoxDecoration(
+            color: Colors.white10,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.redAccent, width: 2),
+          ),
+          child: Center(
+            child: Icon(Icons.hourglass_empty, color: Colors.redAccent, size: isLandscape ? 20 : 30),
+          ),
+        ).animate(onPlay: (controller) => controller.repeat())
+         .rotate(duration: 2.seconds),
+      ],
+    );
+  }
+
+  Widget _buildHandArea(BuildContext context, FFAppState state, bool isLandscape, double screenHeight) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: isLandscape ? 2.0 : 4.0),
+          child: FFButtonWidget(
+            onPressed: () async {
+              if (state.YourCardPlayed) return;
+               state.CardState = CardStruct(
+                energy: -4,
+                damage: 0,
+                name: 'Rest',
+              );
+              state.YourCardPlayed = true;
+              safeSetState(() {});
+
+              await Future.delayed(const Duration(milliseconds: 1000));
+              await GameLogic.processTurn(context, isRevealing: true);
+              _model.gameTimerController.onStartTimer();
+              safeSetState(() {});
+            },
+            text: 'REST (+4 Energy)',
+            options: FFButtonOptions(
+              width: isLandscape ? 120 : 140,
+              height: isLandscape ? 28 : 36,
+              color: Colors.amber,
+              textStyle: GoogleFonts.raleway(
+                fontWeight: FontWeight.bold, 
+                color: Colors.black, 
+                fontSize: isLandscape ? 10 : 12
+              ),
+              borderRadius: BorderRadius.circular(18),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: ListView.builder(
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: state.Hand.length,
+              itemBuilder: (context, index) {
+                final card = state.Hand[index];
+                final cardHeight = isLandscape ? (screenHeight * 0.3).clamp(70.0, 110.0) : 120.0;
+                
+                return Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 4.0, 
+                    vertical: isLandscape ? 2.0 : 4.0
+                  ),
+                  child: Draggable<CardStruct>(
+                    data: card,
+                    onDragStarted: () {
+                      if (state.YourCardPlayed) return;
+                    },
+                    feedback: Material(
+                      type: MaterialType.transparency,
+                      child: SizedBox(
+                        height: cardHeight,
+                        child: AspectRatio(
+                          aspectRatio: 3/4,
+                          child: CardValueComponentWidget(componentCard: card),
+                        ),
+                      ),
+                    ),
+                    childWhenDragging: Opacity(
+                      opacity: 0.3,
+                      child: SizedBox(
+                        height: cardHeight,
+                        child: AspectRatio(
+                          aspectRatio: 3/4,
+                          child: CardValueComponentWidget(componentCard: card),
+                        ),
+                      ),
+                    ),
+                    child: Opacity(
+                      opacity: state.YourCardPlayed ? 0.5 : 1.0,
+                      child: AspectRatio(
+                        aspectRatio: 3/4,
+                        child: CardValueComponentWidget(componentCard: card),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildPlayerHeader(
     BuildContext context, 
@@ -480,10 +505,16 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
     int life, 
     int energy, 
     bool isOpponent, 
-    {String? avatarUrl, bool isHit = false, bool isEnergyGained = false, bool isEnergyLost = false}
+    {
+      String? avatarUrl, 
+      bool isHit = false, 
+      bool isEnergyGained = false, 
+      bool isEnergyLost = false,
+      required bool isLandscape,
+    }
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isLandscape ? 4 : 12),
       color: isOpponent ? Colors.black26 : Colors.black12,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -499,10 +530,10 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
                       Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: isHit ? Border.all(color: Colors.red, width: 3) : null,
+                          border: isHit ? Border.all(color: Colors.red, width: isLandscape ? 2 : 3) : null,
                         ),
                         child: CircleAvatar(
-                          radius: 24,
+                          radius: isLandscape ? 16 : 24,
                           backgroundImage: NetworkImage(avatarUrl),
                           backgroundColor: Colors.white10,
                         ).animate(target: isHit ? 1 : 0)
@@ -510,19 +541,21 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
                          .tint(color: Colors.red.withValues(alpha: 0.7), duration: 200.ms),
                       ),
                       if (isHit)
-                        const FaIcon(FontAwesomeIcons.burst, color: Colors.yellow, size: 40)
+                        FaIcon(FontAwesomeIcons.burst, color: Colors.yellow, size: isLandscape ? 24 : 40)
                           .animate().scale(duration: 300.ms, curve: Curves.elasticOut)
                           .fadeOut(delay: 400.ms),
                     ],
                   ),
                 ),
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.3,
+                width: MediaQuery.of(context).size.width * (isLandscape ? 0.2 : 0.3),
                 child: AutoSizeText(
                   name,
                   maxLines: 1,
-                  minFontSize: 10,
-                  style: FlutterFlowTheme.of(context).titleMedium,
+                  minFontSize: 8,
+                  style: isLandscape 
+                    ? FlutterFlowTheme.of(context).titleSmall 
+                    : FlutterFlowTheme.of(context).titleMedium,
                 ),
               ),
             ],
@@ -533,38 +566,38 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.favorite, color: Colors.red, size: 32)
+                  Icon(Icons.favorite, color: Colors.red, size: isLandscape ? 24 : 32)
                     .animate(target: isHit ? 1 : 0)
                     .scale(begin: const Offset(1,1), end: const Offset(1.5, 1.5), duration: 300.ms, curve: Curves.bounceOut)
                     .then()
                     .scale(begin: const Offset(1.5,1.5), end: const Offset(1, 1), duration: 300.ms),
                   if (isHit)
-                    Text("-HP", style: GoogleFonts.robotoCondensed(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10))
+                    Text("-HP", style: GoogleFonts.robotoCondensed(color: Colors.white, fontWeight: FontWeight.w900, fontSize: isLandscape ? 8 : 10))
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                 ],
               ),
-              const SizedBox(width: 8),
-              Text('$life', style: GoogleFonts.robotoCondensed(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 24),
+              const SizedBox(width: 4),
+              Text('$life', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 22, fontWeight: FontWeight.bold)),
+              SizedBox(width: isLandscape ? 12 : 24),
               // Energy Icon
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(Icons.bolt, color: Colors.amber, size: 32)
+                  Icon(Icons.bolt, color: Colors.amber, size: isLandscape ? 24 : 32)
                     .animate(target: isEnergyGained || isEnergyLost ? 1 : 0)
                     .scale(begin: const Offset(1,1), end: const Offset(1.5, 1.5), duration: 300.ms, curve: Curves.elasticOut)
                     .then()
                     .scale(begin: const Offset(1.5,1.5), end: const Offset(1, 1), duration: 300.ms),
                   if (isEnergyGained)
-                    const Icon(Icons.add, color: Colors.green, size: 20)
+                    Icon(Icons.add, color: Colors.green, size: isLandscape ? 14 : 20)
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                   if (isEnergyLost)
-                    const Icon(Icons.remove, color: Colors.orange, size: 20)
+                    Icon(Icons.remove, color: Colors.orange, size: isLandscape ? 14 : 20)
                       .animate().moveY(begin: 0, end: -40, duration: 600.ms).fadeOut(),
                 ],
               ),
-              const SizedBox(width: 8),
-              Text('$energy', style: GoogleFonts.robotoCondensed(fontSize: 22, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 4),
+              Text('$energy', style: GoogleFonts.robotoCondensed(fontSize: isLandscape ? 18 : 22, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -572,28 +605,36 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
     );
   }
 
-  Widget _buildPlayedCard(BuildContext context, bool played, CardStruct card, String label) {
-    // Hide computer card if it's played but user hasn't played yet
+  Widget _buildPlayedCard(
+    BuildContext context, 
+    bool played, 
+    CardStruct card, 
+    String label, 
+    {required bool isLandscape, required double screenHeight}
+  ) {
     final shouldHide = label == 'Opponent' && played && !FFAppState().YourCardPlayed;
+    final cardHeight = isLandscape ? (screenHeight * 0.4).clamp(60.0, 120.0) : 125.0;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-        const SizedBox(height: 8),
+        Text(label, style: TextStyle(color: Colors.white70, fontSize: isLandscape ? 10 : 12)),
+        const SizedBox(height: 4),
         Container(
-          width: 90,
-          height: 125,
+          height: cardHeight,
           decoration: BoxDecoration(
             color: Colors.white10,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white24, width: 2),
           ),
-          child: played 
-            ? (shouldHide 
-                ? const Center(child: Icon(Icons.help_center, size: 40, color: Colors.amber)) 
-                : CardValueComponentWidget(componentCard: card)) 
-            : const Center(child: Icon(Icons.style, size: 40, color: Colors.white24)),
+          child: AspectRatio(
+            aspectRatio: 3/4,
+            child: played 
+              ? (shouldHide 
+                  ? const Center(child: Icon(Icons.help_center, size: 30, color: Colors.amber)) 
+                  : CardValueComponentWidget(componentCard: card)) 
+              : Center(child: Icon(Icons.style, size: 30, color: Colors.white24)),
+          ),
         ),
       ],
     );

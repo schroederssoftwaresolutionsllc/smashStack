@@ -88,17 +88,20 @@ class _GameEndedDisplayComponentWidgetState
   @override
   Widget build(BuildContext context) {
     context.watch<FFAppState>();
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Card(
+    return Center(
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: screenHeight * 0.9,
+          maxWidth: MediaQuery.of(context).size.width * (isLandscape ? 0.6 : 0.85),
+        ),
+        child: Card(
           elevation: 10,
+          clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
-            width: MediaQuery.sizeOf(context).width * 0.8,
-            padding: EdgeInsets.all(24),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
@@ -110,64 +113,69 @@ class _GameEndedDisplayComponentWidgetState
               ),
             ),
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    FFAppState().GameEndedWin ? 'VICTORY!' : 'DEFEAT!',
-                    style: GoogleFonts.raleway(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    FFAppState().GameEndedWin ? 'You have smashed the stack!' : 'The stack was too much this time.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildStatRow('Cards Played', FFAppState().SessionCardsPlayed.toString()),
-                        _buildStatRow('Damage Dealt', FFAppState().SessionDamageDealt.toString()),
-                        _buildStatRow('Damage Taken', FFAppState().SessionDamageTaken.toString()),
-                        _buildStatRow('Energy Spent', FFAppState().SessionEnergySpent.toString()),
-                        _buildStatRow('Successful Evades', FFAppState().SessionEvades.toString()),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  FFButtonWidget(
-                    onPressed: () async {
-                      GameLogic.showPostGameAd();
-                      context.goNamed(LandingPageWidget.routeName);
-                    },
-                    text: 'RETURN TO MENU',
-                    options: FFButtonOptions(
-                      width: double.infinity,
-                      height: 50,
-                      color: Colors.white,
-                      textStyle: GoogleFonts.raleway(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: EdgeInsets.all(isLandscape ? 16 : 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      FFAppState().GameEndedWin ? 'VICTORY!' : 'DEFEAT!',
+                      style: GoogleFonts.raleway(
+                        fontSize: isLandscape ? 28 : 40,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Colors.white,
                       ),
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                  ),
-                ],
+                    SizedBox(height: isLandscape ? 8 : 16),
+                    Text(
+                      FFAppState().GameEndedWin ? 'You have smashed the stack!' : 'The stack was too much this time.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: isLandscape ? 14 : 16),
+                    ),
+                    SizedBox(height: isLandscape ? 12 : 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildStatRow('Cards Played', FFAppState().SessionCardsPlayed.toString()),
+                          _buildStatRow('Damage Dealt', FFAppState().SessionDamageDealt.toString()),
+                          _buildStatRow('Damage Taken', FFAppState().SessionDamageTaken.toString()),
+                          _buildStatRow('Energy Spent', FFAppState().SessionEnergySpent.toString()),
+                          _buildStatRow('Successful Evades', FFAppState().SessionEvades.toString()),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: isLandscape ? 16 : 32),
+                    FFButtonWidget(
+                      onPressed: () async {
+                        GameLogic.showPostGameAd();
+                        context.goNamed(LandingPageWidget.routeName);
+                      },
+                      text: 'RETURN TO MENU',
+                      options: FFButtonOptions(
+                        width: double.infinity,
+                        height: isLandscape ? 40 : 50,
+                        color: Colors.white,
+                        textStyle: GoogleFonts.raleway(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          fontSize: isLandscape ? 14 : 16,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ).animateOnPageLoad(animationsMap['containerOnPageLoadAnimation1']!),
-      ],
+      ),
     );
   }
 }

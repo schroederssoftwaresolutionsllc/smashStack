@@ -42,7 +42,7 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
     super.dispose();
   }
 
-  Widget _buildTypeIcon(String name) {
+  Widget _buildTypeIcon(String name, double iconSize) {
     final lowerName = name.toLowerCase();
     IconData iconData;
     Color iconColor;
@@ -78,7 +78,7 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
         child: FaIcon(
           iconData,
           color: iconColor,
-          size: 24.0,
+          size: iconSize,
         ),
       ),
     );
@@ -88,158 +88,172 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
   Widget build(BuildContext context) {
     final isCountered = widget.componentCard?.name.toLowerCase() == 'wait';
 
-    return Container(
-      width: 75.0,
-      height: 105.0,
-      decoration: BoxDecoration(
-        color: FlutterFlowTheme.of(context).secondaryBackground,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 10.0,
-            color: Colors.black.withValues(alpha: 0.3),
-            offset: const Offset(0.0, 4.0),
-          )
-        ],
-        borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(
-          color: isCountered ? Colors.red : FlutterFlowTheme.of(context).primary,
-          width: 2.0,
-        ),
-      ),
-      child: Stack(
-        children: [
-          Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              // Header: Energy & Damage
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    topRight: Radius.circular(10),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.bolt, color: Colors.amber, size: 14),
-                        Text(
-                          '${widget.componentCard?.energy ?? 0}',
-                          style: FlutterFlowTheme.of(context).bodySmall.override(
-                                font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
-                                fontSize: 12,
-                              ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        FaIcon(FontAwesomeIcons.handFist, color: Colors.redAccent, size: 12),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${widget.componentCard?.damage ?? 0}',
-                          style: FlutterFlowTheme.of(context).bodySmall.override(
-                                font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
-                                fontSize: 12,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // Main Body: Image or Icon
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Builder(
-                      builder: (context) {
-                        final cardName = widget.componentCard?.name ?? 'N/A';
-                        final imageUrl = widget.componentCard?.image ?? 'N/A';
-                        
-                        if (imageUrl != 'N/A' && imageUrl.isNotEmpty) {
-                          String finalUrl = imageUrl;
-                          if (imageUrl.startsWith('gs://')) {
-                            try {
-                              final uri = Uri.parse(imageUrl);
-                              final path = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
-                              finalUrl = 'https://firebasestorage.googleapis.com/v0/b/smash-stack-7a6b6.firebasestorage.app/o/${Uri.encodeComponent(path)}?alt=media';
-                            } catch (_) {}
-                          }
-                          return Image.network(
-                            finalUrl,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => _buildTypeIcon(cardName),
-                          );
-                        }
-                        return _buildTypeIcon(cardName);
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              // Footer: Name
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(10),
-                    bottomRight: Radius.circular(10),
-                  ),
-                ),
-                child: Text(
-                  widget.componentCard?.name ?? 'N/A',
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: FlutterFlowTheme.of(context).bodySmall.override(
-                        font: GoogleFonts.raleway(fontWeight: FontWeight.w800),
-                        fontSize: 10.0,
-                      ),
-                ),
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth;
+        final cardHeight = constraints.maxHeight;
+        final scaleFactor = (cardWidth / 75.0).clamp(0.5, 2.0);
+        
+        return Container(
+          width: cardWidth,
+          height: cardHeight,
+          decoration: BoxDecoration(
+            color: FlutterFlowTheme.of(context).secondaryBackground,
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 6.0 * scaleFactor,
+                color: Colors.black.withValues(alpha: 0.3),
+                offset: Offset(0.0, 2.0 * scaleFactor),
+              )
             ],
+            borderRadius: BorderRadius.circular(8.0 * scaleFactor),
+            border: Border.all(
+              color: isCountered ? Colors.red : FlutterFlowTheme.of(context).primary,
+              width: 1.5 * scaleFactor,
+            ),
           ),
-          if (isCountered)
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Transform.rotate(
-                  angle: -0.5,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: Stack(
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // Header: Energy & Damage
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 4 * scaleFactor, 
+                      vertical: 2 * scaleFactor
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.white, width: 1),
+                      color: FlutterFlowTheme.of(context).primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(7 * scaleFactor),
+                        topRight: Radius.circular(7 * scaleFactor),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.bolt, color: Colors.amber, size: 12 * scaleFactor),
+                            Text(
+                              '${widget.componentCard?.energy ?? 0}',
+                              style: FlutterFlowTheme.of(context).bodySmall.override(
+                                    font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
+                                    fontSize: (10 * scaleFactor).clamp(8.0, 14.0),
+                                  ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            FaIcon(FontAwesomeIcons.handFist, color: Colors.redAccent, size: 10 * scaleFactor),
+                            SizedBox(width: 2 * scaleFactor),
+                            Text(
+                              '${widget.componentCard?.damage ?? 0}',
+                              style: FlutterFlowTheme.of(context).bodySmall.override(
+                                    font: GoogleFonts.robotoCondensed(fontWeight: FontWeight.bold),
+                                    fontSize: (10 * scaleFactor).clamp(8.0, 14.0),
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Main Body: Image or Icon
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(3.0 * scaleFactor),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(6.0 * scaleFactor),
+                        child: Builder(
+                          builder: (context) {
+                            final cardName = widget.componentCard?.name ?? 'N/A';
+                            final imageUrl = widget.componentCard?.image ?? 'N/A';
+                            
+                            if (imageUrl != 'N/A' && imageUrl.isNotEmpty) {
+                              String finalUrl = imageUrl;
+                              if (imageUrl.startsWith('gs://')) {
+                                try {
+                                  final uri = Uri.parse(imageUrl);
+                                  final path = uri.path.startsWith('/') ? uri.path.substring(1) : uri.path;
+                                  finalUrl = 'https://firebasestorage.googleapis.com/v0/b/smash-stack-7a6b6.firebasestorage.app/o/${Uri.encodeComponent(path)}?alt=media';
+                                } catch (_) {}
+                              }
+                              return Image.network(
+                                finalUrl,
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => _buildTypeIcon(cardName, 20 * scaleFactor),
+                              );
+                            }
+                            return _buildTypeIcon(cardName, 20 * scaleFactor);
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Footer: Name
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(vertical: 1.5 * scaleFactor),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(7 * scaleFactor),
+                        bottomRight: Radius.circular(7 * scaleFactor),
+                      ),
                     ),
                     child: Text(
-                      'COUNTERED',
-                      style: GoogleFonts.robotoCondensed(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 10,
+                      widget.componentCard?.name ?? 'N/A',
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FlutterFlowTheme.of(context).bodySmall.override(
+                            font: GoogleFonts.raleway(fontWeight: FontWeight.w800),
+                            fontSize: (9.0 * scaleFactor).clamp(7.0, 12.0),
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              if (isCountered)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8 * scaleFactor),
+                  ),
+                  child: Center(
+                    child: Transform.rotate(
+                      angle: -0.5,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 4 * scaleFactor, 
+                          vertical: 2 * scaleFactor
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4 * scaleFactor),
+                          border: Border.all(color: Colors.white, width: 1 * scaleFactor),
+                        ),
+                        child: Text(
+                          'COUNTERED',
+                          style: GoogleFonts.robotoCondensed(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: (8 * scaleFactor).clamp(6.0, 10.0),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
-        ],
-      ),
+            ],
+          ),
+        );
+      }
     );
   }
 }
