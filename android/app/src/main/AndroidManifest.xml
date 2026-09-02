@@ -57,9 +57,12 @@
 
 
 
+        <!-- Supplied by the admobAppId manifest placeholder in
+             android/app/build.gradle. Debug builds get Google's sample ID;
+             release builds require a real one via ADMOB_APP_ID. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="${admobAppId}"/>
 
     </application>
 </manifest>

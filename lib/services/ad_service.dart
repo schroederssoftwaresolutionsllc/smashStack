@@ -1,6 +1,7 @@
-import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/foundation.dart';
+
+import 'ad_config.dart';
 
 class AdService {
   static final AdService _instance = AdService._internal();
@@ -10,24 +11,20 @@ class AdService {
   InterstitialAd? _interstitialAd;
   bool _isAdLoaded = false;
 
-  String get interstitialAdUnitId {
-    if (kIsWeb) return '';
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/1033173712'; // Test ID
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/4411468910'; // Test ID
-    }
-    return '';
-  }
+  String get interstitialAdUnitId => AdConfig.interstitialAdUnitId;
+
+  /// True when an ad unit is configured for this build. Release builds with
+  /// no production unit set run with ads off.
+  bool get adsEnabled => AdConfig.adsEnabled;
 
   Future<void> init() async {
-    if (kIsWeb) return;
+    if (kIsWeb || !adsEnabled) return;
     await MobileAds.instance.initialize();
     loadInterstitialAd();
   }
 
   void loadInterstitialAd() {
-    if (kIsWeb) return;
+    if (kIsWeb || !adsEnabled) return;
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
@@ -56,6 +53,7 @@ class AdService {
   }
 
   void showInterstitialAd() {
+    if (!adsEnabled) return;
     if (_isAdLoaded && _interstitialAd != null) {
       _interstitialAd!.show();
     } else {
