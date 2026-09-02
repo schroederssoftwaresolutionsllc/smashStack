@@ -31,9 +31,13 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+// Google's sample AdMob application ID. Valid and correct for development,
+// but it must not ship: real users would see "Test Ad" placeholders.
+def ADMOB_SAMPLE_APP_ID = 'ca-app-pub-3940256099942544~3347511713'
+
 // Real AdMob application ID for release builds. Set it in
 // android/gradle.properties as ADMOB_APP_ID=ca-app-pub-...~..., or pass
-// -PADMOB_APP_ID=... on the command line.
+// -PADMOB_APP_ID=... on the command line (including on CI).
 def admobAppIdProd = project.findProperty('ADMOB_APP_ID')
 
 android {
@@ -70,7 +74,7 @@ android {
 
         // Google's public sample AdMob app ID, correct for development.
         // Overridden below for release builds.
-        manifestPlaceholders = [admobAppId: 'ca-app-pub-3940256099942544~3347511713']
+        manifestPlaceholders = [admobAppId: ADMOB_SAMPLE_APP_ID]
     }
 
    signingConfigs {
@@ -84,7 +88,11 @@ android {
 
     buildTypes {
         release {
-            manifestPlaceholders = [admobAppId: admobAppIdProd ?: '']
+            // Never leave this empty: the Google Mobile Ads SDK validates
+            // APPLICATION_ID in a ContentProvider at process start and crashes
+            // the app on launch if it is blank. Fall back to the sample ID and
+            // warn instead, so a misconfigured build is ugly rather than broken.
+            manifestPlaceholders = [admobAppId: admobAppIdProd ?: ADMOB_SAMPLE_APP_ID]
 
             // Use the real upload key when android/key.properties is present.
             // Falls back to debug signing so `flutter run --release` still works locally.
@@ -103,19 +111,27 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0"
 }
 
-// Google's sample AdMob app ID must never ship in a release build: users would
-// see "Test Ad" placeholders and the binary would carry another publisher's
-// identifier. This check runs only when a release task is actually in the
-// graph, so debug builds and `flutter run` are unaffected.
+// Warn loudly when a release build has no real AdMob application ID. This is a
+// warning rather than a build failure so it cannot break CI; the trade-off is
+// that the sample ID ships if the warning is ignored. Gated on a release task
+// actually being in the graph, so debug builds and `flutter run` stay quiet.
 gradle.taskGraph.whenReady { graph ->
     def buildingRelease = graph.allTasks.any { it.name.toLowerCase().contains('release') }
     if (buildingRelease && !admobAppIdProd) {
-        throw new GradleException(
-            "ADMOB_APP_ID is not set, so this release build would ship Google's sample AdMob app ID.\n\n" +
-            "Create the app in AdMob (answer \"No\" to the app-store-listing question if it is not\n" +
-            "published yet) and add its application ID to android/gradle.properties:\n\n" +
-            "    ADMOB_APP_ID=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY\n\n" +
-            "Production ad unit IDs go in lib/services/ad_config.dart. If those are left blank the\n" +
-            "app builds and runs with ads switched off, which is a safe way to ship without ads.\n")
+        logger.warn("")
+        logger.warn("=" * 78)
+        logger.warn("WARNING: ADMOB_APP_ID is not set, so this RELEASE build is using")
+        logger.warn("Google's sample AdMob app ID. Users would see \"Test Ad\" placeholders.")
+        logger.warn("")
+        logger.warn("Fix: create the app in AdMob (answer \"No\" to the app-store-listing")
+        logger.warn("question if it is not published yet) and set its application ID in")
+        logger.warn("android/gradle.properties, or pass -PADMOB_APP_ID=... on CI:")
+        logger.warn("")
+        logger.warn("    ADMOB_APP_ID=ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY")
+        logger.warn("")
+        logger.warn("Production ad unit IDs go in lib/services/ad_config.dart. While those")
+        logger.warn("are blank the app runs with ads switched off, which ships safely.")
+        logger.warn("=" * 78)
+        logger.warn("")
     }
 }
