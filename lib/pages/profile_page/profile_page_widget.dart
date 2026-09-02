@@ -237,15 +237,25 @@ class _ProfilePageWidgetState extends State<ProfilePageWidget> {
     if (confirmed != true) return;
 
     setState(() => _isDeletingAccount = true);
+
+    // Deleting the account signs the user out, which the router would
+    // otherwise react to on its own and interrupt the navigation below.
+    // The sign-out flow on the landing page suppresses it the same way.
+    final router = GoRouter.of(context);
+    router.prepareAuthEvent();
+
     final result = await AccountDeletionService.deleteAccountAndData();
     if (!mounted) return;
     setState(() => _isDeletingAccount = false);
 
     if (result == AccountDeletionResult.success) {
-      GoRouter.of(context).clearRedirectLocation();
+      router.clearRedirectLocation();
       context.goNamedAuth(LoginWidget.routeName, context.mounted);
       return;
     }
+
+    // Nothing was deleted, so no auth event will fire to re-arm the notifier.
+    router.appState.updateNotifyOnAuthChange(true);
 
     final message = result == AccountDeletionResult.requiresRecentLogin
         ? 'For your security, please sign out and sign in again, then delete '
