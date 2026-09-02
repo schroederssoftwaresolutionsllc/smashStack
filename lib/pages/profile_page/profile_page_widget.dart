@@ -3,7 +3,9 @@ import '/backend/backend.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
+import '/services/account_deletion_service.dart';
 import '/services/revenue_cat_service.dart';
+import '/index.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,6 +26,7 @@ class ProfilePageWidget extends StatefulWidget {
 class _ProfilePageWidgetState extends State<ProfilePageWidget> {
   late ProfilePageModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isDeletingAccount = false;
 
   @override
   void initState() {
@@ -175,6 +178,25 @@ class _ProfilePageWidgetState extends State<ProfilePageWidget> {
                           ),
                         ),
                       ),
+                      SizedBox(height: 4),
+                      TextButton(
+                        onPressed: _isDeletingAccount
+                            ? null
+                            : _confirmAndDeleteAccount,
+                        child: _isDeletingAccount
+                            ? SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text(
+                                'Delete Account',
+                                style: TextStyle(
+                                  color: FlutterFlowTheme.of(context).error,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                      ),
                       SizedBox(height: 20),
                     ],
                   ),
@@ -185,6 +207,57 @@ class _ProfilePageWidgetState extends State<ProfilePageWidget> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmAndDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Delete account?'),
+        content: Text(
+          'This permanently deletes your account, your profile and your '
+          'win/loss record. Purchases are tied to your store account and are '
+          'not affected. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: FlutterFlowTheme.of(context).error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isDeletingAccount = true);
+    final result = await AccountDeletionService.deleteAccountAndData();
+    if (!mounted) return;
+    setState(() => _isDeletingAccount = false);
+
+    if (result == AccountDeletionResult.success) {
+      GoRouter.of(context).clearRedirectLocation();
+      context.goNamedAuth(LoginWidget.routeName, context.mounted);
+      return;
+    }
+
+    final message = result == AccountDeletionResult.requiresRecentLogin
+        ? 'For your security, please sign out and sign in again, then delete '
+            'your account.'
+        : result == AccountDeletionResult.notSignedIn
+            ? 'You are not signed in.'
+            : 'Something went wrong deleting your account. Please try again, '
+                'or email Schroederssoftwaresolutions@gmail.com.';
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _buildStatRow(BuildContext context, String label, String value, IconData icon, Color iconColor) {
