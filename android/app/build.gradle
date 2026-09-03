@@ -51,10 +51,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
-    }
-
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
@@ -102,13 +98,22 @@ android {
     }
 }
 
+// Kotlin 2.3 raises an error on every kotlinOptions property, so the JVM
+// target moves to the compilerOptions DSL. Kept at 1.8 to match the
+// source/targetCompatibility set in the android block above.
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+    }
+}
+
 flutter {
     source '../..'
 }
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.20"
 }
 
 // Warn loudly when a release build has no real AdMob application ID. This is a
