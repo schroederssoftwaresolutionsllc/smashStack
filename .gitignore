@@ -37,6 +37,10 @@ migrate_working_dir/
 **/ios/Flutter/flutter_framework_list.json
 **/ios/ServiceDefinitions.json
 **/pubspec.lock
+# Podfile.lock must float too: pubspec.lock is ignored, so Dart plugins
+# re-resolve on every CI build and a frozen Podfile.lock goes stale the
+# moment a plugin bumps its pod requirement.
+**/ios/Podfile.lock
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
