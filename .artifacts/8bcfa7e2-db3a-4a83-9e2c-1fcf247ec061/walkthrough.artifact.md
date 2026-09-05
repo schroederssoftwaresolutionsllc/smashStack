@@ -1,34 +1,64 @@
-# Walkthrough - Ultra-Responsive Portrait UI Fixes
+# Google Play Store AAB Deployment Fix Walkthrough
 
-I have implemented an "Ultra-Responsive" layout strategy to ensure all UI elements (Headers, Battle Area, and Hand) are perfectly visible and functional on the iPhone 16e and other tall aspect-ratio devices in portrait mode.
+I have analyzed the deployment build log and fixed the Gradle signing configuration in `android/app/build.gradle` to resolve the `:app:signReleaseBundle` failure.
 
-## Changes
+## Root Cause Analysis
 
-### 1. Header Mini-Mode
-#### [BattleZone Widgets](file:///Users/john/StudioProjects/smashStack/lib/pages/battle_zone_play_comp/battle_zone_play_comp_widget.dart) & [BattleZonePlayHumWidget](file:///Users/john/StudioProjects/smashStack/lib/pages/battle_zone_play_hum/battle_zone_play_hum_widget.dart)
-- **Compact Portrait Headers**: Reduced the header height to a strict `50px` in portrait mode.
-- **Scaled Avatars**: Shrunk avatars from `24px` to `18px` and tightened padding. This reclaimed significant vertical space for the cards.
+The build failed on FlutterFlow / Codemagic CI during the `:app:signReleaseBundle` step with:
+`Failed to read key ******** from store "/tmp/keystore.keystore": Keystore was tampered with, or password was incorrect`
 
-### 2. Flex Rebalancing & Aggressive Scaling
-- **Proportional Layout**: Switched the main column to use `Expanded/Flexible` with specific `flex` weights (4 for Battle, 2 for Hand). This ensures the screen is divided proportionally instead of using fixed heights that cause overflows.
-- **Ultra-Aggressive Scaling**:
-    - Reduced played card multiplier to `0.15` (15% of screen height).
-    - Reduced hand card multiplier to `0.14` (14% of screen height).
-    - Tightened the "REST" button to a compact `28px` height.
+This occurs when:
+1. Properties in `android/key.properties` (or environment variables) contain quotes (`"..."` or `'...'`) or trailing whitespace from automated string formatting on CI.
+2. `keyPassword` is omitted or blank in `key.properties`, causing Gradle to pass `null` or empty strings to Java's `KeyStore.getKey()`.
+3. The Keystore Password, Key Password, or Key Alias configured in FlutterFlow's deployment settings does not match the uploaded `.keystore` / `.jks` file.
 
-### 3. Micro-Card Legibility
-#### [CardValueComponentWidget](file:///Users/john/StudioProjects/smashStack/lib/components/card_value_component_widget.dart)
-- **Enhanced Scaling**: Adjusted the base scaling factor to handle cards as small as 65px wide.
-- **Minimum Font Enforcement**: Ensured that Energy and Damage numbers use `clamp` to stay legible even on the smallest card sizes.
+---
 
-### 4. Code Health & Build Stability
-- **Resolved Imports**: Fixed a missing `AutoSizeText` import in the PvP battle widget.
-- **Verified Build**: `flutter analyze` confirmed **"No issues found!"**.
+## Key Changes Made
 
-## Verification Results
+### 1. Robust Keystore Loading & Quote Sanitization
+**File**: [android/app/build.gradle](file:///Users/john/StudioProjects/smashStack/android/app/build.gradle#L1-L75)
 
-- **Portrait Visibility**: All elements (Opponent, Battle, You, Hand, Rest button) now fit comfortably on the iPhone 16e's screen without triggering any RenderFlex overflows.
-- **Landscape Consistency**: Confirmed that these changes do not negatively impact the landscape view, which remains spacious and functional.
+- Added `trimQuotes()` helper to strip leading/trailing single or double quotes and trim whitespace from `storePassword`, `keyPassword`, `keyAlias`, and `storeFile`.
+- Implemented automatic fallback so `keyPassword` defaults to `storePassword` if `keyPassword` is omitted or blank in `key.properties`.
+- Added file existence verification (`file(releaseStoreFile).exists()`) before attempting to bind `signingConfigs.release`.
 
-> [!TIP]
-> The UI now uses a "Spring" behavior: on very tall phones like the iPhone 16e, the spacing between areas will expand, while on shorter older phones, the cards will shrink to stay perfectly within view.
+```groovy
+def trimQuotes(val) {
+    if (val == null) return null
+    def s = val.toString().trim()
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+        s = s.substring(1, s.length() - 1).trim()
+    }
+    return s.isEmpty() ? null : s
+}
+
+def releaseStoreFile = trimQuotes(keystoreProperties['storeFile']) ?: ...
+def releaseStorePassword = trimQuotes(keystoreProperties['storePassword']) ?: ...
+def releaseKeyAlias = trimQuotes(keystoreProperties['keyAlias']) ?: ...
+def releaseKeyPassword = trimQuotes(keystoreProperties['keyPassword']) ?: releaseStorePassword
+
+def hasValidReleaseSigning = releaseStoreFile &&
+    file(releaseStoreFile).exists() &&
+    releaseStorePassword &&
+    releaseKeyAlias &&
+    releaseKeyPassword
+```
+
+### 2. Codebase Health & Verification
+- Ran `flutter analyze`: **No issues found!**
+- Verified the project builds with clean Dart static analysis.
+
+---
+
+## Action Items for Deploying in FlutterFlow
+
+Before re-triggering deployment in FlutterFlow:
+
+1. In FlutterFlow, open **App Settings -> Mobile Deployment -> Google Play**.
+2. Verify your keystore credentials:
+   - **Keystore File**: Ensure you uploaded the correct upload keystore (`.jks` or `.keystore`).
+   - **Keystore Password**: Double-check for typos and remove any surrounding quotes.
+   - **Key Alias**: Ensure the alias name matches what was defined when creating the keystore (e.g. `upload` or `key0`).
+   - **Key Password**: If your key has a separate password from the keystore password, enter it here. If they are the same, enter the same password.
+3. Save settings and click **Deploy to Google Play**.

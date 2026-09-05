@@ -25,11 +25,47 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+def trimQuotes(val) {
+    if (val == null) return null
+    def s = val.toString().trim()
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+        s = s.substring(1, s.length() - 1).trim()
+    }
+    return s.isEmpty() ? null : s
+}
+
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
 }
+
+def releaseStoreFile = trimQuotes(keystoreProperties['storeFile']) ?:
+    trimQuotes(project.findProperty('ANDROID_STORE_FILE')) ?:
+    trimQuotes(System.getenv('ANDROID_STORE_FILE')) ?:
+    trimQuotes(System.getenv('CM_KEYSTORE_PATH'))
+
+def releaseStorePassword = trimQuotes(keystoreProperties['storePassword']) ?:
+    trimQuotes(project.findProperty('ANDROID_STORE_PASSWORD')) ?:
+    trimQuotes(System.getenv('ANDROID_STORE_PASSWORD')) ?:
+    trimQuotes(System.getenv('CM_KEYSTORE_PASSWORD'))
+
+def releaseKeyAlias = trimQuotes(keystoreProperties['keyAlias']) ?:
+    trimQuotes(project.findProperty('ANDROID_KEY_ALIAS')) ?:
+    trimQuotes(System.getenv('ANDROID_KEY_ALIAS')) ?:
+    trimQuotes(System.getenv('CM_KEY_ALIAS'))
+
+def releaseKeyPassword = trimQuotes(keystoreProperties['keyPassword']) ?:
+    trimQuotes(project.findProperty('ANDROID_KEY_PASSWORD')) ?:
+    trimQuotes(System.getenv('ANDROID_KEY_PASSWORD')) ?:
+    trimQuotes(System.getenv('CM_KEY_PASSWORD')) ?:
+    releaseStorePassword
+
+def hasValidReleaseSigning = releaseStoreFile &&
+    file(releaseStoreFile).exists() &&
+    releaseStorePassword &&
+    releaseKeyAlias &&
+    releaseKeyPassword
 
 // Google's sample AdMob application ID. Valid and correct for development,
 // but it must not ship: real users would see "Test Ad" placeholders.
@@ -75,10 +111,12 @@ android {
 
    signingConfigs {
        release {
-           keyAlias keystoreProperties['keyAlias']
-           keyPassword keystoreProperties['keyPassword']
-           storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-           storePassword keystoreProperties['storePassword']
+           if (hasValidReleaseSigning) {
+               keyAlias releaseKeyAlias
+               keyPassword releaseKeyPassword
+               storeFile file(releaseStoreFile)
+               storePassword releaseStorePassword
+           }
        }
    }
 
@@ -90,9 +128,9 @@ android {
             // warn instead, so a misconfigured build is ugly rather than broken.
             manifestPlaceholders = [admobAppId: admobAppIdProd ?: ADMOB_SAMPLE_APP_ID]
 
-            // Use the real upload key when android/key.properties is present.
-            // Falls back to debug signing so `flutter run --release` still works locally.
-            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            // Use the real upload key when valid keystore info and file are present.
+            // Falls back to debug signing so `flutter run --release` still works locally or if signing is not configured.
+            signingConfig hasValidReleaseSigning ? signingConfigs.release : signingConfigs.debug
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
