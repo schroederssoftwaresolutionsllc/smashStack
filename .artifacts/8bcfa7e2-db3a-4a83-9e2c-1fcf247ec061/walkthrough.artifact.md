@@ -1,64 +1,46 @@
-# Google Play Store AAB Deployment Fix Walkthrough
+# Google Play Publishing Step Walkthrough
 
-I have analyzed the deployment build log and fixed the Gradle signing configuration in `android/app/build.gradle` to resolve the `:app:signReleaseBundle` failure.
-
-## Root Cause Analysis
-
-The build failed on FlutterFlow / Codemagic CI during the `:app:signReleaseBundle` step with:
-`Failed to read key ******** from store "/tmp/keystore.keystore": Keystore was tampered with, or password was incorrect`
-
-This occurs when:
-1. Properties in `android/key.properties` (or environment variables) contain quotes (`"..."` or `'...'`) or trailing whitespace from automated string formatting on CI.
-2. `keyPassword` is omitted or blank in `key.properties`, causing Gradle to pass `null` or empty strings to Java's `KeyStore.getKey()`.
-3. The Keystore Password, Key Password, or Key Alias configured in FlutterFlow's deployment settings does not match the uploaded `.keystore` / `.jks` file.
+Your App Bundle **Version Code 9 (v2.0.5)** was **successfully compiled, signed, and uploaded to Google Play**!
 
 ---
 
-## Key Changes Made
+## Log Analysis
 
-### 1. Robust Keystore Loading & Quote Sanitization
-**File**: [android/app/build.gradle](file:///Users/john/StudioProjects/smashStack/android/app/build.gradle#L1-L75)
+Looking at the build output:
 
-- Added `trimQuotes()` helper to strip leading/trailing single or double quotes and trim whitespace from `storePassword`, `keyPassword`, `keyAlias`, and `storeFile`.
-- Implemented automatic fallback so `keyPassword` defaults to `storePassword` if `keyPassword` is omitted or blank in `key.properties`.
-- Added file existence verification (`file(releaseStoreFile).exists()`) before attempting to bind `signingConfigs.release`.
-
-```groovy
-def trimQuotes(val) {
-    if (val == null) return null
-    def s = val.toString().trim()
-    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-        s = s.substring(1, s.length() - 1).trim()
-    }
-    return s.isEmpty() ? null : s
-}
-
-def releaseStoreFile = trimQuotes(keystoreProperties['storeFile']) ?: ...
-def releaseStorePassword = trimQuotes(keystoreProperties['storePassword']) ?: ...
-def releaseKeyAlias = trimQuotes(keystoreProperties['keyAlias']) ?: ...
-def releaseKeyPassword = trimQuotes(keystoreProperties['keyPassword']) ?: releaseStorePassword
-
-def hasValidReleaseSigning = releaseStoreFile &&
-    file(releaseStoreFile).exists() &&
-    releaseStorePassword &&
-    releaseKeyAlias &&
-    releaseKeyPassword
+```text
+Uploaded App Bundle /home/builder/clone/build/app/outputs/bundle/release/app-release.aab to Google Play
+-- Bundle --
+Version code: 9
+Sha1: cf71d14ff5c37e13171b95703a6e8ac6ddeb9d84
+Sha256: 159658a14aaa2248370aa189f65e3193529946f661ec3993a8213e370bd2639a
 ```
 
-### 2. Codebase Health & Verification
-- Ran `flutter analyze`: **No issues found!**
-- Verified the project builds with clean Dart static analysis.
+The upload itself was 100% successful. The failure occurred on the final automated API call:
+
+```text
+Setting release for Google Play track internal failed.
+Changes cannot be sent for review automatically. Please set the query parameter changesNotSentForReview to true. Once committed, the changes in this edit can be sent for review from the Google Play Console UI.
+```
+
+### Why Google Play API Returned This Notice
+Google Play requires developer accounts to review and submit releases directly through the **Google Play Console UI** rather than allowing third-party API scripts (like Codemagic/FlutterFlow) to auto-commit and send changes for review automatically without human confirmation.
 
 ---
 
-## Action Items for Deploying in FlutterFlow
+## How to Complete the Release (1 Minute Process)
 
-Before re-triggering deployment in FlutterFlow:
+Since **Version Code 9 is already saved in your Google Play Console**:
 
-1. In FlutterFlow, open **App Settings -> Mobile Deployment -> Google Play**.
-2. Verify your keystore credentials:
-   - **Keystore File**: Ensure you uploaded the correct upload keystore (`.jks` or `.keystore`).
-   - **Keystore Password**: Double-check for typos and remove any surrounding quotes.
-   - **Key Alias**: Ensure the alias name matches what was defined when creating the keystore (e.g. `upload` or `key0`).
-   - **Key Password**: If your key has a separate password from the keystore password, enter it here. If they are the same, enter the same password.
-3. Save settings and click **Deploy to Google Play**.
+1. Log in to [Google Play Console](https://play.google.com/console).
+2. Select your app **Smash Stack**.
+3. In the left menu, go to **Testing $\rightarrow$ Internal testing** (or **Publishing overview** / **Releases**).
+4. You will see **Version Code 9 (2.0.5)** ready in your release library.
+5. Click **Edit Release** $\rightarrow$ **Save** $\rightarrow$ **Review release** $\rightarrow$ **Send for review** (or **Start rollout to Internal testing**).
+
+---
+
+## Repository Maintenance
+
+- **Version Bumped**: Updated `pubspec.yaml` to `2.0.6+10` and pushed to both `main` and `flutterflow` branches so any future build will automatically use Version Code 10 without version code collision.
+- **Project Health**: `flutter analyze` returned 0 issues.
