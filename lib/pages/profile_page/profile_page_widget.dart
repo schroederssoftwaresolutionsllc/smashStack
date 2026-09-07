@@ -4,6 +4,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/flutter_flow_widgets.dart';
 import '/services/account_deletion_service.dart';
+import '/services/ad_config.dart';
 import '/services/revenue_cat_service.dart';
 import '/index.dart';
 import 'package:flutter/foundation.dart';
@@ -99,7 +100,11 @@ class _ProfilePageWidgetState extends State<ProfilePageWidget> {
                       _buildStatRow(context, 'Win Rate', '${stats?.winPercentage ?? 0}%', Icons.show_chart, Colors.green),
                       _buildStatRow(context, 'Streak', stats?.winningStreak.toString() ?? '0', Icons.whatshot, Colors.orange),
                       SizedBox(height: 32),
-                      if (!Provider.of<RevenueCatService>(context).isPro)
+                      // Only offer to remove ads when ads are actually served. Production
+                      // ad unit IDs are blank in AdConfig, so this build shows none;
+                      // selling their removal would be misleading.
+                      if (AdConfig.adsEnabled &&
+                          !Provider.of<RevenueCatService>(context).isPro)
                         FFButtonWidget(
                           onPressed: () async {
                             bool success = await Provider.of<RevenueCatService>(context, listen: false).presentPaywall();
