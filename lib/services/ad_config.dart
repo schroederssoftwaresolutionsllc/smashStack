@@ -23,10 +23,16 @@ class AdConfig {
   const AdConfig._();
 
   // ---------------------------------------------------------------------
-  // Paste your production ad unit IDs here, then rebuild.
-  // Until these are filled in, release builds simply run without ads.
+  // Production ad unit IDs. An empty string switches ads off for that
+  // platform, and `adsEnabled` then hides the Remove Ads purchase with them.
+  //
+  // iOS is deliberately empty: there is no iOS app in the AdMob account yet,
+  // and serving ads on iOS would also require an App Tracking Transparency
+  // prompt, which this app does not implement. Filling this in without that
+  // work would risk an App Store rejection.
   // ---------------------------------------------------------------------
-  static const String androidInterstitialProd = '';
+  static const String androidInterstitialProd =
+      'ca-app-pub-6757910454110346/1548316113';
   static const String iosInterstitialProd = '';
 
   // Google's public sample units. Debug builds only.
