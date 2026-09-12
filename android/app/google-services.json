@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "399996765332-jsb71eodah2uv96gakfbrr8c5ka83n5n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.schroederssoftwaresolutions.smashstack",
+            "certificate_hash": "8458ba196d9b59a77be2e2f34bd82b18c9aff6f7"
+          }
+        },
+        {
           "client_id": "399996765332-m2dpmi22p8lmrap5ck8cb2rb3p2r96ul.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

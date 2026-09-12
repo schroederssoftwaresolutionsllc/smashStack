@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import '../auth_manager.dart';
 
 import '/backend/backend.dart';
@@ -311,11 +312,55 @@ class FirebaseAuthManager extends AuthManager
           'Error: The supplied auth credential is incorrect, malformed or has expired',
         _ => 'Error: ${e.message!}',
       };
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMsg)),
+      _showAuthError(context, errorMsg);
+      return null;
+    } on PlatformException catch (e) {
+      // Google and Apple sign-in report configuration problems here rather
+      // than as a FirebaseAuthException. The common one is ApiException 10
+      // (DEVELOPER_ERROR): the certificate that signed the installed build is
+      // not registered with the Firebase project, which is always true for a
+      // Play-signed build unless the Play app signing SHA-1 has been added.
+      // This branch used to be missing, so the exception escaped unhandled:
+      // the account sheet closed and the login screen sat there doing nothing.
+      // Google Play rejected the release for exactly that under the Broken
+      // Functionality policy.
+      _showAuthError(context, _platformSignInError(e, authProvider));
+      return null;
+    } catch (_) {
+      _showAuthError(
+        context,
+        'Sign-in failed. Please check your connection and try again, '
+        'or use a different sign-in option.',
       );
       return null;
     }
+  }
+
+  void _showAuthError(BuildContext context, String message) {
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 6)),
+    );
+  }
+
+  String _platformSignInError(PlatformException e, String authProvider) {
+    final provider = authProvider == 'GOOGLE' ? 'Google' : 'Apple';
+    // Codes 10 and 12500 both mean the app's signing certificate or OAuth
+    // client is not configured for this build.
+    final message = e.message ?? '';
+    if (e.code == '10' ||
+        e.code == '12500' ||
+        (e.code == 'sign_in_failed' && message.contains('10'))) {
+      return '$provider sign-in is not available in this build. '
+          'Please use another sign-in option.';
+    }
+    if (e.code == 'network_error') {
+      return 'No network connection. Please check your connection and try again.';
+    }
+    return '$provider sign-in failed. Please try again, '
+        'or use a different sign-in option.';
   }
 }
