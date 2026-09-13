@@ -229,6 +229,67 @@ class _LoginWidgetState extends State<LoginWidget>
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                           ),
+                          // Google Play rejected this release under the Broken
+                          // Functionality policy: Google sign-in was the only
+                          // way past this screen on Android, so a reviewer who
+                          // could not complete it had no route into the app.
+                          // A guest route keeps the app reachable without an
+                          // account.
+                          FFButtonWidget(
+                            onPressed: () async {
+                              GoRouter.of(context).prepareAuthEvent();
+                              final user =
+                                  await authManager.signInAnonymously(context);
+                              if (user == null) {
+                                return;
+                              }
+
+                              context.goNamedAuth(
+                                  LandingPageWidget.routeName, context.mounted);
+                            },
+                            text: 'Continue as Guest',
+                            icon: FaIcon(
+                              FontAwesomeIcons.user,
+                              size: 20.0,
+                            ),
+                            options: FFButtonOptions(
+                              width: double.infinity,
+                              height: 56.0,
+                              padding: EdgeInsetsDirectional.fromSTEB(
+                                  16.0, 0.0, 16.0, 0.0),
+                              iconAlignment: IconAlignment.start,
+                              iconPadding: EdgeInsetsDirectional.fromSTEB(
+                                  0.0, 0.0, 0.0, 0.0),
+                              iconColor:
+                                  FlutterFlowTheme.of(context).primaryText,
+                              color: FlutterFlowTheme.of(context)
+                                  .secondaryBackground,
+                              textStyle: FlutterFlowTheme.of(context)
+                                  .titleMedium
+                                  .override(
+                                    font: GoogleFonts.raleway(
+                                      fontWeight: FontWeight.w600,
+                                      fontStyle: FlutterFlowTheme.of(context)
+                                          .titleMedium
+                                          .fontStyle,
+                                    ),
+                                    color: FlutterFlowTheme.of(context)
+                                        .primaryText,
+                                    fontSize: 16.0,
+                                    letterSpacing: 0.0,
+                                    fontWeight: FontWeight.w600,
+                                    fontStyle: FlutterFlowTheme.of(context)
+                                        .titleMedium
+                                        .fontStyle,
+                                  ),
+                              elevation: 0.0,
+                              borderSide: BorderSide(
+                                color: FlutterFlowTheme.of(context).alternate,
+                                width: 2.0,
+                              ),
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                          ),
                         ].divide(SizedBox(height: 16.0)),
                       ),
                     ].divide(SizedBox(height: 32.0)),

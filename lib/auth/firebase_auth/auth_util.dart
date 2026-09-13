@@ -17,11 +17,34 @@ String get currentUserEmail =>
 
 String get currentUserUid => currentUser?.uid ?? '';
 
-String get currentUserDisplayName =>
-    currentUserDocument?.displayName ?? currentUser?.displayName ?? '';
+/// Display name for the signed-in user.
+///
+/// Anonymous ("guest") sessions carry no display name, and several screens
+/// render this string directly, so fall back to a readable label rather than
+/// showing an empty space where a name should be.
+String get currentUserDisplayName {
+  final name = currentUserDocument?.displayName ?? currentUser?.displayName;
+  if (name != null && name.trim().isNotEmpty) {
+    return name;
+  }
+  return loggedIn ? 'Guest' : '';
+}
 
-String get currentUserPhoto =>
-    currentUserDocument?.photoUrl ?? currentUser?.photoUrl ?? '';
+/// Avatar URL for the signed-in user.
+///
+/// Anonymous sessions, and accounts whose provider supplied no photo, have no
+/// URL here. Every consumer passes this straight to NetworkImage or
+/// CachedNetworkImage, both of which fail on an empty string, so fall back to
+/// the same generated-avatar service already used for opponents. Seeding by
+/// uid keeps a guest's face stable across screens and between sessions.
+String get currentUserPhoto {
+  final photo = currentUserDocument?.photoUrl ?? currentUser?.photoUrl;
+  if (photo != null && photo.trim().isNotEmpty) {
+    return photo;
+  }
+  final seed = currentUserUid.isNotEmpty ? currentUserUid : 'guest';
+  return 'https://api.dicebear.com/7.x/avataaars/png?seed=$seed';
+}
 
 String get currentPhoneNumber =>
     currentUserDocument?.phoneNumber ?? currentUser?.phoneNumber ?? '';
