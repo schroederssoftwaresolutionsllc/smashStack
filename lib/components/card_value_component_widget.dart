@@ -44,7 +44,7 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
 
   Widget _buildTypeIcon(String name, double iconSize) {
     final lowerName = name.toLowerCase();
-    IconData iconData;
+    dynamic iconData;
     Color iconColor;
 
     if (lowerName.contains('rest')) {
@@ -70,16 +70,19 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
       iconColor = FlutterFlowTheme.of(context).primary;
     }
 
+    Widget iconWidget;
+    if (iconData is FaIconData) {
+      iconWidget = FaIcon(iconData, color: iconColor, size: iconSize);
+    } else {
+      iconWidget = Icon(iconData as IconData?, color: iconColor, size: iconSize);
+    }
+
     return Container(
       width: double.infinity,
       height: double.infinity,
       color: iconColor.withValues(alpha: 0.1),
       child: Center(
-        child: FaIcon(
-          iconData,
-          color: iconColor,
-          size: iconSize,
-        ),
+        child: iconWidget,
       ),
     );
   }

@@ -307,7 +307,7 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
     );
   }
 
-  Widget _buildOverlayMessage(BuildContext context, String title, String subtitle, Color color, IconData icon, {required bool isLandscape}) {
+  Widget _buildOverlayMessage(BuildContext context, String title, String subtitle, Color color, dynamic icon, {required bool isLandscape}) {
     return Container(
       padding: EdgeInsets.all(isLandscape ? 16 : 32),
       decoration: BoxDecoration(
@@ -321,7 +321,9 @@ class _BattleZonePlayHumWidgetState extends State<BattleZonePlayHumWidget>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FaIcon(icon, color: color, size: isLandscape ? 40 : 80)
+          icon is FaIconData 
+            ? FaIcon(icon, color: color, size: isLandscape ? 40 : 80)
+            : Icon(icon as IconData?, color: color, size: isLandscape ? 40 : 80)
             .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
           SizedBox(height: isLandscape ? 8 : 16),
           Text(

@@ -335,7 +335,7 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
     String title, 
     String subtitle, 
     Color color, 
-    IconData icon, 
+    dynamic icon, 
     {required bool isLandscape}
   ) {
     return Container(
@@ -351,7 +351,9 @@ class _BattleZonePlayCompWidgetState extends State<BattleZonePlayCompWidget>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FaIcon(icon, color: color, size: isLandscape ? 40 : 80)
+          icon is FaIconData 
+            ? FaIcon(icon, color: color, size: isLandscape ? 40 : 80)
+            : Icon(icon as IconData?, color: color, size: isLandscape ? 40 : 80)
             .animate().scale(duration: 400.ms, curve: Curves.elasticOut),
           SizedBox(height: isLandscape ? 8 : 16),
           Text(

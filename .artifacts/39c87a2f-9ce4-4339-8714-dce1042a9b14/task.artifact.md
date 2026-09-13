@@ -1,0 +1,5 @@
+- [x] Upgrade AGP version to 8.11.1 in `android/settings.gradle`
+- [x] Upgrade Gradle version to 8.14.0 in `android/gradle/wrapper/gradle-wrapper.properties`
+- [x] Verify build with `flutter build apk --debug`
+- [x] Implement build-script level workaround for ANDROID_PREFS_ROOT conflict in `gradlew.bat` and `gradlew`
+- [x] Document environment variable fix for user
