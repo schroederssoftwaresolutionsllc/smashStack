@@ -290,7 +290,7 @@ class _LoginWidgetState extends State<LoginWidget>
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                           ),
-                        ].divide(SizedBox(height: 16.0)),
+                        ].divide(SizedBox(height: 11.0)),
                       ),
                     ].divide(SizedBox(height: 32.0)),
                   ),
