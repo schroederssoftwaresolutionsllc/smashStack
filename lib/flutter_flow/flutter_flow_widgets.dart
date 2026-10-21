@@ -211,11 +211,17 @@ class _FFButtonWidgetState extends State<FFButtonWidget> {
 
     if ((widget.icon != null || widget.iconData != null) && !loading) {
       Widget icon = widget.icon ??
-          FaIcon(
-            widget.iconData!,
-            size: widget.options.iconSize,
-            color: widget.options.iconColor,
-          );
+          (widget.iconData?.fontFamily?.contains('FontAwesome') == true
+              ? FaIcon(
+                  widget.iconData,
+                  size: widget.options.iconSize,
+                  color: widget.options.iconColor,
+                )
+              : Icon(
+                  widget.iconData!,
+                  size: widget.options.iconSize,
+                  color: widget.options.iconColor,
+                ));
 
       if (text == null) {
         return Container(

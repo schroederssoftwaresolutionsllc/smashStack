@@ -104,6 +104,7 @@ class _ProfilePageWidgetState extends State<ProfilePageWidget> {
                       // ad unit IDs are blank in AdConfig, so this build shows none;
                       // selling their removal would be misleading.
                       if (AdConfig.adsEnabled &&
+                          Provider.of<RevenueCatService>(context).purchasesEnabled &&
                           !Provider.of<RevenueCatService>(context).isPro)
                         FFButtonWidget(
                           onPressed: () async {
@@ -168,6 +169,7 @@ class _ProfilePageWidgetState extends State<ProfilePageWidget> {
                         ),
 
                       SizedBox(height: 12),
+                      if (Provider.of<RevenueCatService>(context).purchasesEnabled)
                       TextButton(
                         onPressed: () async {
                           bool success = await Provider.of<RevenueCatService>(context, listen: false).restorePurchases();

@@ -12,16 +12,49 @@ class RevenueCatService extends ChangeNotifier {
   bool get isPro => _isPro;
 
   static const String _entitlementId = "Smash Stack Pro";
-  static const String _apiKey = "test_wPhhtafAuluxazorSsFIelwHEri";
+
+  // RevenueCat Test Store key. Debug builds only: the SDK deliberately crashes
+  // a release build that is configured with a test_ key (this is what got
+  // version code 12 rejected by Google Play for crashing on launch).
+  static const String _testStoreApiKey = "test_wPhhtafAuluxazorSsFIelwHEri";
+
+  // Production public SDK keys from the RevenueCat dashboard (Project
+  // settings > API keys). Google Play keys start with "goog_", App Store keys
+  // with "appl_". Leave blank until the store app is configured in RevenueCat
+  // and its products exist in Play Console / App Store Connect; while blank,
+  // release builds run with purchases switched off and the Remove Ads and
+  // Restore Purchases buttons hidden.
+  static const String _googlePlayApiKey = "";
+  static const String _appStoreApiKey = "";
+
+  static String get _apiKey {
+    if (kIsWeb) return '';
+    if (kDebugMode) return _testStoreApiKey;
+    if (defaultTargetPlatform == TargetPlatform.android) return _googlePlayApiKey;
+    if (defaultTargetPlatform == TargetPlatform.iOS) return _appStoreApiKey;
+    return '';
+  }
+
+  bool _configured = false;
+
+  /// True only when RevenueCat was configured with a key valid for this build.
+  bool get purchasesEnabled => _configured;
 
   Future<void> init() async {
-    if (kIsWeb) return;
+    final apiKey = _apiKey;
+    if (apiKey.isEmpty || (apiKey.startsWith('test_') && !kDebugMode)) {
+      debugPrint("RevenueCat disabled: no production API key for this platform.");
+      return;
+    }
 
     try {
-      await Purchases.setLogLevel(LogLevel.debug);
+      if (kDebugMode) {
+        await Purchases.setLogLevel(LogLevel.debug);
+      }
 
-      PurchasesConfiguration configuration = PurchasesConfiguration(_apiKey);
+      PurchasesConfiguration configuration = PurchasesConfiguration(apiKey);
       await Purchases.configure(configuration);
+      _configured = true;
 
       await updatePurchaseStatus();
     } catch (e) {
@@ -33,6 +66,7 @@ class RevenueCatService extends ChangeNotifier {
   String get debugEntitlementInfo => _debugEntitlementInfo;
 
   Future<void> updatePurchaseStatus() async {
+    if (!_configured) return;
     try {
       CustomerInfo customerInfo = await Purchases.getCustomerInfo();
       
@@ -80,6 +114,7 @@ class RevenueCatService extends ChangeNotifier {
   }
 
   Future<bool> presentPaywall() async {
+    if (!_configured) return false;
     if (_isPro) {
       debugPrint("User is already Pro, skipping paywall.");
       return true;
@@ -106,6 +141,7 @@ class RevenueCatService extends ChangeNotifier {
   }
 
   Future<bool> purchaseProManually() async {
+    if (!_configured) return false;
     try {
       Offerings offerings = await Purchases.getOfferings();
       if (offerings.current != null && offerings.current!.availablePackages.isNotEmpty) {
@@ -128,6 +164,7 @@ class RevenueCatService extends ChangeNotifier {
   }
 
   Future<bool> restorePurchases() async {
+    if (!_configured) return false;
     try {
       CustomerInfo restoredInfo = await Purchases.restorePurchases();
       _isPro = _checkEntitlement(restoredInfo);

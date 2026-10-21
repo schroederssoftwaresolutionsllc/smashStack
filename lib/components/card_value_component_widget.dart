@@ -75,11 +75,9 @@ class _CardValueComponentWidgetState extends State<CardValueComponentWidget> {
       height: double.infinity,
       color: iconColor.withValues(alpha: 0.1),
       child: Center(
-        child: FaIcon(
-          iconData,
-          color: iconColor,
-          size: iconSize,
-        ),
+        child: iconData.fontFamily?.contains('FontAwesome') == true
+            ? FaIcon(iconData, color: iconColor, size: iconSize)
+            : Icon(iconData, color: iconColor, size: iconSize),
       ),
     );
   }
