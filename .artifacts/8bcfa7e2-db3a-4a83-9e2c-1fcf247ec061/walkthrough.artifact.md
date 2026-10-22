@@ -1,46 +1,41 @@
-# Google Play Publishing Step Walkthrough
+# Gradle Wrapper 8.14 Upgrade Walkthrough
 
-Your App Bundle **Version Code 9 (v2.0.5)** was **successfully compiled, signed, and uploaded to Google Play**!
+I have resolved the `Build AAB with Flutter` failure in FlutterFlow CI/CD by upgrading the Gradle Wrapper version to **8.14.0**.
 
 ---
 
-## Log Analysis
+## Root Cause Analysis
 
-Looking at the build output:
+The build log showed the following failure when applying `dev.flutter.flutter-gradle-plugin`:
 
 ```text
-Uploaded App Bundle /home/builder/clone/build/app/outputs/bundle/release/app-release.aab to Google Play
--- Bundle --
-Version code: 9
-Sha1: cf71d14ff5c37e13171b95703a6e8ac6ddeb9d84
-Sha256: 159658a14aaa2248370aa189f65e3193529946f661ec3993a8213e370bd2639a
+> Failed to apply plugin 'dev.flutter.flutter-gradle-plugin'.
+   > Error: Your project's Gradle version (8.12.0) is lower than Flutter's minimum supported version of 8.14.0. Please upgrade your Gradle version.
+     Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
 ```
 
-The upload itself was 100% successful. The failure occurred on the final automated API call:
-
-```text
-Setting release for Google Play track internal failed.
-Changes cannot be sent for review automatically. Please set the query parameter changesNotSentForReview to true. Once committed, the changes in this edit can be sent for review from the Google Play Console UI.
-```
-
-### Why Google Play API Returned This Notice
-Google Play requires developer accounts to review and submit releases directly through the **Google Play Console UI** rather than allowing third-party API scripts (like Codemagic/FlutterFlow) to auto-commit and send changes for review automatically without human confirmation.
+The Flutter SDK environment used on Codemagic / FlutterFlow CI was upgraded to a version requiring a minimum Gradle version of **8.14.0**, whereas `android/gradle/wrapper/gradle-wrapper.properties` was previously configured for Gradle 8.12.
 
 ---
 
-## How to Complete the Release (1 Minute Process)
+## Key Changes Made
 
-Since **Version Code 9 is already saved in your Google Play Console**:
+1. **Gradle Wrapper Upgraded to 8.14**:
+   - **File**: [android/gradle/wrapper/gradle-wrapper.properties](file:///Users/john/StudioProjects/smashStack/android/gradle/wrapper/gradle-wrapper.properties#L1-L6)
+   - **Change**: Updated `distributionUrl` to `https://services.gradle.org/distributions/gradle-8.14-all.zip`.
 
-1. Log in to [Google Play Console](https://play.google.com/console).
-2. Select your app **Smash Stack**.
-3. In the left menu, go to **Testing $\rightarrow$ Internal testing** (or **Publishing overview** / **Releases**).
-4. You will see **Version Code 9 (2.0.5)** ready in your release library.
-5. Click **Edit Release** $\rightarrow$ **Save** $\rightarrow$ **Review release** $\rightarrow$ **Send for review** (or **Start rollout to Internal testing**).
+2. **Version Bumped**:
+   - **File**: [pubspec.yaml](file:///Users/john/StudioProjects/smashStack/pubspec.yaml)
+   - **Change**: Bumped version to `2.0.11+15` for the next CI/CD build cycle.
+
+3. **Git Synchronization**:
+   - Committed changes and fast-forward merged `main` into `flutterflow`.
+   - Pushed commit `4577c15` to both `origin/main` and `origin/flutterflow`.
 
 ---
 
-## Repository Maintenance
+## Verification Results
 
-- **Version Bumped**: Updated `pubspec.yaml` to `2.0.6+10` and pushed to both `main` and `flutterflow` branches so any future build will automatically use Version Code 10 without version code collision.
-- **Project Health**: `flutter analyze` returned 0 issues.
+- `flutter analyze`: **0 issues found!**
+- Git Status: Clean working tree, remote branches `main` and `flutterflow` fully synchronized at commit `4577c15`.
+- FlutterFlow CI/CD can now be re-triggered.
