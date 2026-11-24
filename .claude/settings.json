@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "sss-tools": {
+      "source": {
+        "source": "github",
+        "repo": "schroederssoftwaresolutionsllc/sssBrain"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "sss-brain@sss-tools": true
+  }
+}
